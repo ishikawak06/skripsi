@@ -1314,14 +1314,14 @@ input, textarea, select { font-family: var(--font); }
       </div>
 
       <!-- GAS Section -->
-      <div style="padding:14px;background:var(--amber-l);border-radius:var(--radius);border:1px solid rgba(180,83,9,.15)">
-        <p style="font-size:12.5px;color:var(--amber);font-weight:600;margin-bottom:4px">
-          <i class="ph ph-google-sheets-logo"></i> Google Apps Script (Opsional)
+      <div style="padding:14px;background:var(--green-l);border-radius:var(--radius);border:1px solid rgba(26,122,74,.2)">
+        <p style="font-size:12.5px;color:var(--green);font-weight:600;margin-bottom:4px">
+          <i class="ph-fill ph-check-circle"></i> Google Spreadsheet — Terhubung
         </p>
-        <p style="font-size:12px;color:var(--ink2);margin-bottom:8px;line-height:1.6">
-          Untuk menyimpan data ke Google Spreadsheet. Tanpa ini, data tetap tersimpan di browser.
+        <p style="font-size:12px;color:var(--ink2);line-height:1.6">
+          Data Anda otomatis tersimpan ke Google Spreadsheet. URL sudah dikonfigurasi.
         </p>
-        <input class="form-input" id="profile-gas-url" placeholder="https://script.google.com/macros/s/..." style="font-size:12px">
+        <input class="form-input" id="profile-gas-url" style="font-size:11px;margin-top:8px;color:var(--ink3)" readonly>
       </div>
     </div>
     <div class="modal-footer">
@@ -1410,7 +1410,7 @@ let state = {
   userMajor: 'Sistem Informasi',
   thesisTitle: '',
   targetDate: '',
-  gasUrl: '',
+  gasUrl: 'https://script.google.com/macros/s/AKfycbwvHhmALyxwpi7-Q8UT0XQrWLqUMZABFbWYD7fP2WQGXvelkopscq1QjKej7LanVHVYZg/exec',
   apiKey: '',
   progress: [0, 0, 0, 0, 0],
   todos: [],
@@ -1419,11 +1419,15 @@ let state = {
   currentTool: null,
 };
 
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwvHhmALyxwpi7-Q8UT0XQrWLqUMZABFbWYD7fP2WQGXvelkopscq1QjKej7LanVHVYZg/exec';
+
 function loadLocalState() {
   const saved = localStorage.getItem('skripsiAI_state');
   if (saved) {
     try { Object.assign(state, JSON.parse(saved)); } catch(e) {}
   }
+  // Always ensure GAS URL is set (in case localStorage has old/empty value)
+  state.gasUrl = GAS_URL;
   if (!state.sessionId) {
     state.sessionId = 'session_' + Math.random().toString(36).slice(2,11);
     saveLocalState();
@@ -1437,26 +1441,24 @@ function saveLocalState() {
 // ═══════════════════════════════════════════════════════════
 //  GAS API (Google Apps Script Backend)
 // ═══════════════════════════════════════════════════════════
-async function gasGet(params) {
+// Semua request ke GAS pakai GET (CORS-safe dari browser)
+async function gasCall(params) {
   if (!state.gasUrl) return null;
-  const url = state.gasUrl + '?' + new URLSearchParams({ sessionId: state.sessionId, ...params });
+  // Encode params sebagai query string — GAS hanya support GET dari browser
+  const qs = new URLSearchParams({ sessionId: state.sessionId, ...params });
   try {
-    const r = await fetch(url);
+    const r = await fetch(state.gasUrl + '?' + qs);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     return await r.json();
-  } catch(e) { console.warn('GAS GET error:', e); return null; }
+  } catch(e) {
+    console.warn('GAS error:', e.message);
+    return null;
+  }
 }
 
-async function gasPost(body) {
-  if (!state.gasUrl) return null;
-  try {
-    const r = await fetch(state.gasUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId: state.sessionId, ...body })
-    });
-    return await r.json();
-  } catch(e) { console.warn('GAS POST error:', e); return null; }
-}
+// Alias agar kode lama tetap jalan
+const gasGet  = (p)    => gasCall(p);
+const gasPost = (body) => gasCall(body);
 
 async function syncFromGAS() {
   if (!state.gasUrl) { renderAll(); return; }
@@ -1892,7 +1894,7 @@ async function toggleTodo(id, checked) {
   t.checked = checked;
   saveLocalState();
   renderTodos();
-  await gasPost({ action:'saveTodo', ...t, checked });
+  await gasCall({ action:'toggleTodo', id, checked: String(checked) });
 }
 
 async function deleteTodo(id) {
@@ -2105,12 +2107,12 @@ async function saveProfile() {
     showToast('Format API Key tidak valid! Harus diawali sk-ant-', 'error');
     return;
   }
-  state.userName   = document.getElementById('profile-name').value.trim() || 'Mahasiswa';
-  state.userMajor  = document.getElementById('profile-major').value.trim() || 'Program Studi';
-  state.thesisTitle= document.getElementById('profile-thesis').value.trim();
-  state.targetDate = document.getElementById('profile-target').value;
-  state.gasUrl     = document.getElementById('profile-gas-url').value.trim();
-  state.apiKey     = newKey;
+  state.userName    = document.getElementById('profile-name').value.trim() || 'Mahasiswa';
+  state.userMajor   = document.getElementById('profile-major').value.trim() || 'Program Studi';
+  state.thesisTitle = document.getElementById('profile-thesis').value.trim();
+  state.targetDate  = document.getElementById('profile-target').value;
+  state.gasUrl      = GAS_URL; // always keep hardcoded URL
+  state.apiKey      = newKey;
   saveLocalState();
   updateProfileUI();
   updateApiKeyBadge();
@@ -2305,11 +2307,7 @@ function checkMobile() {
   // First time hint
   if (!state.apiKey) {
     setTimeout(() => {
-      showToast('👋 Pertama kali? Klik avatar di sidebar → isi API Key Anthropic.', 'info');
-    }, 1200);
-  } else if (!state.gasUrl) {
-    setTimeout(() => {
-      showToast('Atur URL Apps Script di Profil untuk sinkron ke Spreadsheet.', 'info');
+      showToast('👋 Satu langkah lagi! Klik avatar di sidebar → isi API Key Anthropic.', 'info');
     }, 1200);
   }
 })();
