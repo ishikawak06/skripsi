@@ -1,0 +1,2216 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkripsiAI — Asisten Penyelesaian Skripsi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════════════ */
+:root {
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+
+  --bg:        #f8f7f4;
+  --surface:   #ffffff;
+  --surface2:  #f1f0ec;
+  --border:    #e5e3dd;
+  --border2:   #d0cdc5;
+
+  --ink:       #1a1916;
+  --ink2:      #5a5750;
+  --ink3:      #9a9690;
+
+  --accent:    #2d5be3;
+  --accent-l:  #e8edfb;
+  --accent-d:  #1e46c7;
+
+  --green:     #1a7a4a;
+  --green-l:   #e6f4ed;
+  --amber:     #b45309;
+  --amber-l:   #fef3c7;
+  --red:       #c0392b;
+  --red-l:     #fdecea;
+  --purple:    #6d28d9;
+  --purple-l:  #ede9fe;
+  --teal:      #0f766e;
+  --teal-l:    #e6faf8;
+
+  --radius:    10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --shadow:    0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,.12);
+  --transition: 180ms ease;
+
+  --sidebar-w: 240px;
+}
+
+html.dark {
+  --bg:       #111110;
+  --surface:  #1c1b19;
+  --surface2: #252421;
+  --border:   #2f2d29;
+  --border2:  #3d3a34;
+
+  --ink:      #f0ede8;
+  --ink2:     #9a9690;
+  --ink3:     #5a5750;
+
+  --accent:   #4f7ef8;
+  --accent-l: #1a2340;
+  --accent-d: #6b94ff;
+
+  --green:    #34d399;
+  --green-l:  #0a2318;
+  --amber:    #fbbf24;
+  --amber-l:  #2a1a00;
+  --red:      #f87171;
+  --red-l:    #2a0a0a;
+  --purple:   #a78bfa;
+  --purple-l: #1e1040;
+  --teal:     #2dd4bf;
+  --teal-l:   #05201e;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink3); }
+a { color: var(--accent); text-decoration: none; }
+button { font-family: var(--font); cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: var(--font); }
+[contenteditable]:empty::before { content: attr(placeholder); color: var(--ink3); pointer-events: none; }
+
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT SHELL
+═══════════════════════════════════════════════════════════ */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ─── Sidebar ─── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: transform var(--transition), width var(--transition);
+  z-index: 100;
+}
+.sidebar-logo {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -.3px;
+  flex-shrink: 0;
+}
+.sidebar-logo .logo-icon {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.sidebar-logo .logo-text span { color: var(--accent); }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 8px; }
+.nav-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  padding: 12px 10px 4px;
+}
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  color: var(--ink2);
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: all var(--transition);
+  text-align: left;
+  margin-bottom: 1px;
+}
+.nav-btn i { font-size: 17px; flex-shrink: 0; width: 20px; text-align: center; }
+.nav-btn:hover { background: var(--surface2); color: var(--ink); }
+.nav-btn.active { background: var(--accent-l); color: var(--accent); }
+.nav-btn.active i { color: var(--accent); }
+
+.sidebar-footer {
+  padding: 12px 8px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.user-card:hover { background: var(--surface2); }
+.user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.user-info { overflow: hidden; flex: 1; }
+.user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-major { font-size: 11px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ─── Main ─── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+.topbar {
+  height: 60px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.topbar-title { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.icon-btn {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink2);
+  font-size: 18px;
+  transition: all var(--transition);
+}
+.icon-btn:hover { background: var(--surface2); color: var(--ink); }
+
+.badge-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 11px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--surface2);
+  color: var(--ink2);
+  border: 1px solid var(--border);
+}
+.badge-pill.green { background: var(--green-l); color: var(--green); border-color: transparent; }
+.badge-pill.amber { background: var(--amber-l); color: var(--amber); border-color: transparent; }
+.badge-pill i { font-size: 13px; }
+
+.content-area { flex: 1; overflow-y: auto; }
+
+/* ═══════════════════════════════════════════════════════════
+   VIEWS
+═══════════════════════════════════════════════════════════ */
+.view { display: none; height: 100%; }
+.view.active { display: flex; flex-direction: column; }
+
+/* ─── Dashboard ─── */
+#view-dashboard { overflow-y: auto; }
+.view-body { padding: 24px; max-width: 1000px; margin: 0 auto; }
+.view-body.wide { max-width: 1100px; }
+
+.hero-card {
+  background: var(--accent);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.hero-card::after {
+  content: '';
+  position: absolute;
+  right: -30px; top: -30px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+}
+.hero-card h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+.hero-card p { font-size: 14px; opacity: .8; margin-bottom: 20px; }
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: #fff;
+  color: var(--accent);
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13.5px;
+  transition: all var(--transition);
+  border: none; cursor: pointer;
+}
+.hero-btn:hover { background: #f0f4ff; transform: translateY(-1px); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 18px;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.card-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 600;
+}
+.card-title i { font-size: 17px; }
+
+.progress-item {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 14px;
+  border: 1px solid var(--border);
+}
+.progress-label { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.progress-name { font-size: 13px; font-weight: 600; }
+.progress-pct { font-size: 12px; font-weight: 600; color: var(--accent); }
+.progress-sub { font-size: 11px; color: var(--ink3); margin-top: 5px; }
+.bar { height: 5px; border-radius: 99px; background: var(--border); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width .6s ease; }
+
+.todo-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  transition: background var(--transition);
+  cursor: pointer;
+}
+.todo-item:hover { background: var(--surface2); }
+.todo-item input[type=checkbox] {
+  width: 16px; height: 16px; margin-top: 2px;
+  accent-color: var(--accent); flex-shrink: 0; cursor: pointer;
+}
+.todo-text { font-size: 13px; line-height: 1.5; }
+.todo-text.done { text-decoration: line-through; color: var(--ink3); }
+
+.status-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+}
+.status-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
+.status-label i { font-size: 16px; }
+.status-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
+.status-badge.ok { background: var(--green-l); color: var(--green); }
+.status-badge.info { background: var(--accent-l); color: var(--accent); }
+
+/* ─── Tool Grid ─── */
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap: 14px; }
+.tool-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.tool-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.tool-icon {
+  width: 44px; height: 44px;
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+.tool-card h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 5px; }
+.tool-card p { font-size: 12px; color: var(--ink2); line-height: 1.5; }
+
+.view-section-header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.view-section-icon {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.view-section-header h2 { font-size: 18px; font-weight: 600; margin-bottom: 3px; }
+.view-section-header p { font-size: 13px; color: var(--ink2); }
+
+/* ─── Literature ─── */
+.lit-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: all var(--transition);
+  margin-bottom: 10px;
+}
+.lit-item:hover { border-color: var(--accent); }
+.lit-info { flex: 1; min-width: 0; }
+.lit-title { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lit-meta { font-size: 11.5px; color: var(--ink3); }
+.lit-icon { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.lit-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.btn-sm {
+  padding: 5px 11px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all var(--transition);
+  cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--ink2);
+}
+.btn-sm:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-l); }
+.btn-sm.danger:hover { border-color: var(--red); color: var(--red); background: var(--red-l); }
+
+/* ─── Smart Editor ─── */
+#view-editor {
+  flex-direction: row !important;
+  overflow: hidden;
+}
+.editor-area {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.editor-toolbar {
+  position: sticky;
+  bottom: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+  align-self: center;
+  margin-top: 20px;
+}
+.toolbar-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink2);
+  font-size: 16px;
+  transition: all var(--transition);
+}
+.toolbar-btn:hover { background: var(--surface2); color: var(--ink); }
+.toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+.toolbar-ai {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all var(--transition);
+  margin-left: 4px;
+}
+.toolbar-ai:hover { background: var(--accent-d); }
+.toolbar-ai i { font-size: 15px; }
+
+.paper {
+  width: 100%;
+  max-width: 720px;
+  background: var(--surface);
+  min-height: 940px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  padding: 60px 64px;
+  box-shadow: var(--shadow);
+  font-size: 14.5px;
+  line-height: 1.85;
+}
+.paper h1[contenteditable], .paper h2[contenteditable], .paper p[contenteditable] {
+  outline: none;
+  border-radius: 4px;
+  transition: background var(--transition);
+  min-height: 1.5em;
+}
+.paper h1[contenteditable]:focus, .paper h2[contenteditable]:focus, .paper p[contenteditable]:focus {
+  background: rgba(45,91,227,.04);
+}
+.paper h1 { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 32px; line-height: 1.4; }
+.paper h2 { font-size: 15px; font-weight: 700; margin: 24px 0 10px; }
+.paper p { text-align: justify; margin-bottom: 14px; }
+.paper .word-count { font-size: 11px; color: var(--ink3); margin-top: 32px; text-align: right; font-family: var(--mono); }
+
+/* ─── AI Copilot Panel ─── */
+.copilot-panel {
+  width: 320px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transition);
+}
+.copilot-header {
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.copilot-header-left { display: flex; align-items: center; gap: 8px; }
+.copilot-header-left i { color: var(--accent); font-size: 17px; }
+.copilot-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.msg {
+  padding: 10px 13px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 90%;
+}
+.msg.ai {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+  border-radius: var(--radius) var(--radius) var(--radius) 4px;
+}
+.msg.user {
+  background: var(--accent);
+  color: #fff;
+  align-self: flex-end;
+  border-radius: var(--radius) var(--radius) 4px var(--radius);
+}
+.msg.loading { opacity: .6; }
+.msg-typing i { animation: blink 1s infinite; }
+@keyframes blink { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+
+.copilot-input-area {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.quick-btns { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 9px; }
+.quick-btn {
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11.5px;
+  font-weight: 500;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--ink2);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.quick-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-l); }
+.copilot-input-row { display: flex; gap: 7px; }
+.copilot-input-row textarea {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 11px;
+  font-size: 13px;
+  color: var(--ink);
+  resize: none;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color var(--transition);
+  min-height: 60px;
+  max-height: 120px;
+}
+.copilot-input-row textarea:focus { border-color: var(--accent); }
+.send-btn {
+  width: 36px; height: 36px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: all var(--transition);
+  align-self: flex-end;
+  flex-shrink: 0;
+}
+.send-btn:hover { background: var(--accent-d); }
+.send-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ─── Revision Manager ─── */
+.revision-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.revision-group-header {
+  background: var(--surface2);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.revision-item {
+  padding: 12px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border-top: 1px solid var(--border);
+  transition: background var(--transition);
+}
+.revision-item:hover { background: var(--surface2); }
+.revision-item input[type=checkbox] { margin-top: 3px; accent-color: var(--accent); flex-shrink: 0; }
+.revision-item .rev-content { flex: 1; }
+.revision-item .rev-text { font-size: 13px; }
+.revision-item .rev-text.done { text-decoration: line-through; color: var(--ink3); }
+.revision-item .rev-actions { margin-top: 6px; display: flex; gap: 6px; }
+
+/* ─── Data Upload ─── */
+.upload-zone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius-xl);
+  padding: 60px 40px;
+  text-align: center;
+  background: var(--surface);
+  transition: all var(--transition);
+  cursor: pointer;
+}
+.upload-zone.drag-over { border-color: var(--accent); background: var(--accent-l); }
+.upload-zone i { font-size: 48px; color: var(--ink3); margin-bottom: 12px; display: block; }
+.upload-zone h3 { font-size: 16px; font-weight: 600; margin-bottom: 5px; }
+.upload-zone p { font-size: 13px; color: var(--ink3); }
+#file-input { display: none; }
+
+/* ═══════════════════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 600px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: modalIn .2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.modal-header-left { display: flex; align-items: center; gap: 12px; }
+.modal-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  background: var(--accent-l);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.modal-title { font-size: 15px; font-weight: 600; }
+.modal-desc { font-size: 12px; color: var(--ink3); }
+.modal-body { padding: 18px 20px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+
+.form-label { font-size: 12.5px; font-weight: 600; margin-bottom: 6px; display: block; color: var(--ink2); }
+.form-input, .form-textarea, .form-select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color var(--transition);
+  font-family: var(--font);
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--accent); }
+.form-textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+.char-counter { text-align: right; font-size: 11px; color: var(--ink3); margin-top: 4px; font-family: var(--mono); }
+
+.output-box {
+  background: rgba(45,91,227,.04);
+  border: 1px solid rgba(45,91,227,.2);
+  border-radius: var(--radius);
+  padding: 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  display: none;
+  min-height: 80px;
+  color: var(--ink);
+}
+.output-box.visible { display: block; }
+.output-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+  font-family: var(--font);
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-d); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+.btn-secondary { background: var(--surface2); color: var(--ink); border-color: var(--border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost { background: none; color: var(--ink2); border-color: var(--border); }
+.btn-ghost:hover { background: var(--surface2); }
+.btn-danger { background: var(--red-l); color: var(--red); }
+.btn-danger:hover { background: var(--red); color: #fff; }
+
+.spinner { animation: spin .8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Toast ─── */
+.toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--ink);
+  color: #fff;
+  padding: 11px 18px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  z-index: 2000;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all .25s ease;
+  pointer-events: none;
+  max-width: 360px;
+}
+.toast.show { transform: none; opacity: 1; }
+.toast i { font-size: 16px; flex-shrink: 0; }
+.toast.success i { color: #6ee7b7; }
+.toast.error i { color: #fca5a5; }
+.toast.info i { color: #93c5fd; }
+
+/* ─── Save status ─── */
+.save-indicator {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--ink3);
+  transition: color .3s;
+}
+.save-indicator.saving { color: var(--amber); }
+.save-indicator.saved  { color: var(--green); }
+.save-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* ─── Search input ─── */
+.search-wrap { position: relative; margin-bottom: 16px; }
+.search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ink3); font-size: 17px; }
+.search-input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px 10px 38px;
+  font-size: 13.5px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color var(--transition);
+  font-family: var(--font);
+}
+.search-input:focus { border-color: var(--accent); }
+
+/* ─── Progress edit ─── */
+.progress-edit { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.progress-edit input[type=range] { flex: 1; accent-color: var(--accent); }
+.progress-val { font-size: 12px; font-weight: 600; color: var(--accent); min-width: 30px; font-family: var(--mono); }
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { position: fixed; height: 100%; left: 0; top: 0; width: 260px; transform: translateX(-100%); box-shadow: var(--shadow-lg); }
+  .sidebar.open { transform: none; }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 99; }
+  .sidebar-overlay.open { display: block; }
+  .grid-2, .grid-3, .grid-5 { grid-template-columns: 1fr; }
+  .paper { padding: 30px 20px; }
+  .copilot-panel { position: fixed; right: 0; top: 0; bottom: 0; z-index: 90; transform: translateX(100%); }
+  .copilot-panel.open { transform: none; }
+  #view-editor { flex-direction: column !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ APP SHELL ═══ -->
+<div class="app" id="app">
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="ph-fill ph-graduation-cap"></i></div>
+      <span class="logo-text">Skripsi<span>AI</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">Utama</div>
+      <button class="nav-btn active" data-view="dashboard" onclick="switchView('dashboard')">
+        <i class="ph ph-squares-four"></i> Dashboard
+      </button>
+      <button class="nav-btn" data-view="planning" onclick="switchView('planning')">
+        <i class="ph ph-lightbulb"></i> Ide Penelitian
+      </button>
+      <button class="nav-btn" data-view="writing" onclick="switchView('writing')">
+        <i class="ph ph-pencil-line"></i> Asisten Penulisan
+      </button>
+      <button class="nav-btn" data-view="literature" onclick="switchView('literature')">
+        <i class="ph ph-books"></i> Literatur & Referensi
+      </button>
+      <button class="nav-btn" data-view="data" onclick="switchView('data')">
+        <i class="ph ph-chart-bar-horizontal"></i> Pengolahan Data
+      </button>
+      <button class="nav-btn" data-view="finalisasi" onclick="switchView('finalisasi')">
+        <i class="ph ph-certificate"></i> Finalisasi Akademik
+      </button>
+      <div class="nav-group-label" style="margin-top:8px">Workspace</div>
+      <button class="nav-btn" data-view="editor" onclick="switchView('editor')">
+        <i class="ph ph-pen-nib"></i> Smart Editor
+      </button>
+      <button class="nav-btn" data-view="revisions" onclick="switchView('revisions')">
+        <i class="ph ph-check-circle"></i> Revisi Dosen
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button onclick="toggleDark()" class="nav-btn" style="margin-bottom:6px">
+        <i class="ph ph-moon" id="dark-icon"></i>
+        <span id="dark-label">Mode Gelap</span>
+      </button>
+      <div class="user-card" onclick="openProfileModal()">
+        <div class="user-avatar" id="user-avatar">M</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name-display">Mahasiswa</div>
+          <div class="user-major" id="user-major-display">Sistem Informasi</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn" id="menu-btn" onclick="toggleSidebar()" style="display:none">
+          <i class="ph ph-list"></i>
+        </button>
+        <span class="topbar-title" id="topbar-title">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <div class="save-indicator" id="save-indicator">
+          <div class="save-dot"></div>
+          <span id="save-text">Tersimpan</span>
+        </div>
+        <button class="icon-btn" onclick="toggleDark()" title="Toggle tema">
+          <i class="ph ph-moon" id="topbar-dark-icon"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- ════════════ VIEWS ════════════ -->
+
+    <!-- Dashboard -->
+    <div class="view active content-area" id="view-dashboard">
+      <div class="view-body">
+        <div class="hero-card">
+          <h1>Selamat Datang di SkripsiAI! 🚀</h1>
+          <p>Platform produktivitas akademik cerdas. Selesaikan skripsi lebih cepat, terstruktur, dan efisien.</p>
+          <button class="hero-btn" onclick="switchView('editor')">
+            <i class="ph ph-pen-nib"></i> Lanjutkan Menulis
+          </button>
+        </div>
+
+        <!-- Progress -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header">
+            <div class="card-title">
+              <i class="ph ph-chart-line-up" style="color:var(--accent)"></i>
+              Progress Skripsi
+            </div>
+            <button class="btn-sm" onclick="openProgressModal()"><i class="ph ph-pencil"></i> Edit</button>
+          </div>
+          <div class="grid-5" id="progress-grid">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <!-- To-do -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="ph ph-list-checks" style="color:var(--purple)"></i> To-Do Revisi</div>
+              <button class="btn-sm" onclick="switchView('revisions')">Lihat Semua</button>
+            </div>
+            <div id="dashboard-todo">
+              <p style="font-size:13px;color:var(--ink3);padding:8px 0">Memuat...</p>
+            </div>
+            <button class="btn-sm" style="width:100%;justify-content:center;margin-top:8px" onclick="addTodoModal()">
+              <i class="ph ph-plus"></i> Tambah Item
+            </button>
+          </div>
+
+          <!-- System Status -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="ph ph-info" style="color:var(--accent)"></i> Status Sistem</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div class="status-row">
+                <div class="status-label"><i class="ph-fill ph-brain" style="color:var(--accent)"></i> Model AI</div>
+                <span class="status-badge ok">Siap</span>
+              </div>
+              <div class="status-row">
+                <div class="status-label"><i class="ph-fill ph-database" style="color:var(--purple)"></i> Spreadsheet DB</div>
+                <span class="status-badge ok" id="db-status">Terhubung</span>
+              </div>
+              <div class="status-row">
+                <div class="status-label"><i class="ph-fill ph-books" style="color:var(--teal)"></i> Literatur</div>
+                <span class="status-badge info" id="lit-count-badge">0 Disimpan</span>
+              </div>
+              <div class="status-row">
+                <div class="status-label"><i class="ph-fill ph-lock" style="color:var(--green)"></i> API Key</div>
+                <span class="status-badge ok" id="api-key-status">Aman (Backend)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Planning -->
+    <div class="view content-area" id="view-planning">
+      <div class="view-body">
+        <div class="view-section-header">
+          <div class="view-section-icon" style="background:var(--accent-l);color:var(--accent)">
+            <i class="ph-fill ph-lightbulb"></i>
+          </div>
+          <div>
+            <h2>Perencanaan & Ide Penelitian</h2>
+            <p>Asisten cerdas untuk menemukan ide, merancang proposal, dan menyusun kerangka penelitian.</p>
+          </div>
+        </div>
+        <div class="tool-grid" id="planning-tools"></div>
+      </div>
+    </div>
+
+    <!-- Writing -->
+    <div class="view content-area" id="view-writing">
+      <div class="view-body">
+        <div class="view-section-header">
+          <div class="view-section-icon" style="background:var(--purple-l);color:var(--purple)">
+            <i class="ph-fill ph-pencil-line"></i>
+          </div>
+          <div>
+            <h2>Asistensi Penulisan Akademik</h2>
+            <p>Susun, kembangkan, dan sempurnakan kalimat serta paragraf skripsi Anda.</p>
+          </div>
+        </div>
+        <div class="tool-grid" id="writing-tools"></div>
+      </div>
+    </div>
+
+    <!-- Literature -->
+    <div class="view content-area" id="view-literature">
+      <div class="view-body wide">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <h2 style="font-size:18px;font-weight:600">Manajemen Literatur</h2>
+            <p style="font-size:13px;color:var(--ink2);margin-top:2px">Simpan, cari, dan ekstrak intisari jurnal referensi.</p>
+          </div>
+          <button class="btn btn-primary" onclick="addLiteratureModal()">
+            <i class="ph ph-plus-circle"></i> Tambah Jurnal
+          </button>
+        </div>
+        <div class="search-wrap">
+          <i class="ph ph-magnifying-glass"></i>
+          <input class="search-input" type="text" id="lit-search" placeholder="Cari judul, penulis, atau jurnal..." oninput="filterLiterature()">
+        </div>
+        <div id="literature-list">
+          <p style="font-size:13px;color:var(--ink3);padding:20px 0;text-align:center">Memuat literatur...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data -->
+    <div class="view content-area" id="view-data">
+      <div class="view-body">
+        <div class="view-section-header" style="margin-bottom:20px">
+          <div class="view-section-icon" style="background:var(--teal-l);color:var(--teal)">
+            <i class="ph-fill ph-chart-polar"></i>
+          </div>
+          <div>
+            <h2>Asisten Pengolahan Data</h2>
+            <p>Analisis dataset dan dapatkan interpretasi naratif untuk Bab 4.</p>
+          </div>
+        </div>
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+          <i class="ph ph-upload-simple"></i>
+          <h3>Upload Dataset Anda</h3>
+          <p>Seret & lepas atau klik untuk memilih file<br><strong>Format: .csv, .xlsx (maks 5MB)</strong></p>
+          <input type="file" id="file-input" accept=".csv,.xlsx" onchange="handleFileUpload(event)">
+        </div>
+        <div id="data-result" style="margin-top:20px"></div>
+      </div>
+    </div>
+
+    <!-- Finalisasi -->
+    <div class="view content-area" id="view-finalisasi">
+      <div class="view-body wide">
+        <div class="view-section-header">
+          <div class="view-section-icon" style="background:var(--teal-l);color:var(--teal)">
+            <i class="ph-fill ph-certificate"></i>
+          </div>
+          <div>
+            <h2>Finalisasi Standar Akademik</h2>
+            <p>Penyempurnaan akhir mulai dari optimasi tulisan hingga persiapan sidang dan publikasi.</p>
+          </div>
+        </div>
+        <div class="tool-grid" id="finalisasi-tools"></div>
+      </div>
+    </div>
+
+    <!-- Smart Editor -->
+    <div class="view" id="view-editor">
+      <div class="editor-area">
+        <div class="paper" id="paper">
+          <h1 contenteditable="true" placeholder="Ketik Judul Bab..." id="editor-title" spellcheck="false">BAB I<br>PENDAHULUAN</h1>
+          <h2 contenteditable="true" spellcheck="false">1.1 Latar Belakang</h2>
+          <p contenteditable="true" placeholder="Mulai menulis di sini..." id="editor-body" spellcheck="false">Perkembangan teknologi informasi saat ini telah mengubah berbagai aspek kehidupan, termasuk dalam bidang pendidikan. Proses penyelesaian tugas akhir atau skripsi seringkali menjadi tantangan tersendiri bagi mahasiswa, mulai dari pencarian ide, pengelolaan literatur, hingga penyusunan struktur kalimat yang akademis.</p>
+          <div class="word-count" id="word-count">0 kata</div>
+        </div>
+        <div class="editor-toolbar">
+          <button class="toolbar-btn" onclick="execCmd('bold')" title="Bold (Ctrl+B)"><i class="ph ph-text-b"></i></button>
+          <button class="toolbar-btn" onclick="execCmd('italic')" title="Italic (Ctrl+I)"><i class="ph ph-text-italic"></i></button>
+          <button class="toolbar-btn" onclick="execCmd('underline')" title="Underline (Ctrl+U)"><i class="ph ph-text-underline"></i></button>
+          <button class="toolbar-btn" onclick="execCmd('insertUnorderedList')" title="Bullet List"><i class="ph ph-list-bullets"></i></button>
+          <button class="toolbar-btn" onclick="execCmd('insertOrderedList')" title="Numbered List"><i class="ph ph-list-numbers"></i></button>
+          <div class="toolbar-sep"></div>
+          <button class="toolbar-btn" onclick="copySelectedText()" title="Salin teks terpilih"><i class="ph ph-copy"></i></button>
+          <button class="toolbar-btn" onclick="clearFormat()" title="Hapus format"><i class="ph ph-text-strikethrough"></i></button>
+          <div class="toolbar-sep"></div>
+          <button class="toolbar-ai" onclick="askCopilotFromSelection()">
+            <i class="ph-fill ph-sparkle"></i> Tanya AI
+          </button>
+        </div>
+      </div>
+      <!-- Copilot -->
+      <div class="copilot-panel" id="copilot-panel">
+        <div class="copilot-header">
+          <div class="copilot-header-left">
+            <i class="ph-fill ph-sparkle"></i>
+            <span>AI Copilot</span>
+          </div>
+          <button class="icon-btn" onclick="toggleCopilot()" title="Tutup panel"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="copilot-messages" id="copilot-messages">
+          <div class="msg ai">Halo! Saya asisten AI penulisanmu. Blok teks di editor lalu klik <strong>Tanya AI</strong>, atau ketik langsung permintaanmu di bawah.</div>
+        </div>
+        <div class="copilot-input-area">
+          <div class="quick-btns">
+            <button class="quick-btn" onclick="copilotQuick('Perbaiki ejaan dan tata bahasa teks ini')">✏️ Perbaiki Ejaan</button>
+            <button class="quick-btn" onclick="copilotQuick('Lanjutkan paragraf ini secara akademis')">➡️ Lanjutkan</button>
+            <button class="quick-btn" onclick="copilotQuick('Parafrase teks ini agar tidak terdeteksi plagiarisme')">🔄 Parafrase</button>
+            <button class="quick-btn" onclick="copilotQuick('Buat lebih formal dan akademis')">🎓 Formalkan</button>
+          </div>
+          <div class="copilot-input-row">
+            <textarea id="copilot-input" placeholder="Tanya AI untuk mengubah teks..." rows="2" onkeydown="copilotEnter(event)"></textarea>
+            <button class="send-btn" id="copilot-send" onclick="sendCopilot()">
+              <i class="ph-bold ph-paper-plane-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Mobile toggle -->
+      <button class="icon-btn" id="copilot-toggle-btn"
+        style="position:fixed;bottom:20px;right:16px;width:44px;height:44px;background:var(--accent);color:#fff;border-radius:50%;box-shadow:var(--shadow-lg);z-index:50;display:none"
+        onclick="toggleCopilot()">
+        <i class="ph-fill ph-sparkle" style="font-size:20px"></i>
+      </button>
+    </div>
+
+    <!-- Revisions -->
+    <div class="view content-area" id="view-revisions">
+      <div class="view-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <div>
+            <h2 style="font-size:18px;font-weight:600">Manajemen Revisi</h2>
+            <p style="font-size:13px;color:var(--ink2);margin-top:2px">Pantau semua catatan revisi dari dosen pembimbing.</p>
+          </div>
+          <button class="btn btn-primary" onclick="addTodoModal()">
+            <i class="ph ph-plus"></i> Tambah Revisi
+          </button>
+        </div>
+        <div id="revision-list"></div>
+      </div>
+    </div>
+
+  </main><!-- end .main -->
+</div><!-- end .app -->
+
+<!-- ════════════ MODALS ════════════ -->
+
+<!-- Tool AI Modal -->
+<div class="modal-overlay" id="tool-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-icon" id="modal-icon-wrap"><i class="ph-fill ph-sparkle" id="modal-icon"></i></div>
+        <div>
+          <div class="modal-title" id="modal-title">Tool AI</div>
+          <div class="modal-desc" id="modal-desc">Deskripsi</div>
+        </div>
+      </div>
+      <button class="icon-btn" onclick="closeModal('tool-modal')"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <label class="form-label">Deskripsikan Kebutuhan Anda</label>
+        <textarea class="form-textarea" id="tool-input" placeholder="Ketik topik, permasalahan, atau paste teks yang ingin diproses..." oninput="updateCharCount(this,'tool-char')"></textarea>
+        <div class="char-counter"><span id="tool-char">0</span> / 3000 karakter</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" id="btn-generate" onclick="generateAI()">
+          <i class="ph-bold ph-magic-wand"></i> Buat dengan AI
+        </button>
+      </div>
+      <div id="ai-output-wrap" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label class="form-label" style="margin:0;color:var(--accent)"><i class="ph-fill ph-check-circle"></i> Hasil AI</label>
+          <div style="display:flex;gap:8px">
+            <button class="btn-sm" onclick="copyOutput()"><i class="ph ph-copy"></i> Salin</button>
+            <button class="btn-sm" onclick="insertToEditor()"><i class="ph ph-arrow-arc-right"></i> Ke Editor</button>
+          </div>
+        </div>
+        <div class="output-box visible" id="ai-output"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Literature Modal -->
+<div class="modal-overlay" id="lit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-icon" style="background:var(--teal-l);color:var(--teal)"><i class="ph-fill ph-books"></i></div>
+        <div>
+          <div class="modal-title" id="lit-modal-title">Tambah Jurnal</div>
+          <div class="modal-desc">Simpan referensi ke database spreadsheet</div>
+        </div>
+      </div>
+      <button class="icon-btn" onclick="closeModal('lit-modal')"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="lit-id">
+      <div><label class="form-label">Judul *</label><input class="form-input" id="lit-title" placeholder="Judul jurnal / buku..."></div>
+      <div class="grid-2" style="gap:10px">
+        <div><label class="form-label">Penulis</label><input class="form-input" id="lit-authors" placeholder="Nama, A. & Nama, B."></div>
+        <div><label class="form-label">Tahun</label><input class="form-input" id="lit-year" placeholder="2023" type="number" min="1900" max="2099"></div>
+      </div>
+      <div><label class="form-label">Nama Jurnal / Penerbit</label><input class="form-input" id="lit-journal" placeholder="Jurnal Sistem Informasi..."></div>
+      <div><label class="form-label">URL / DOI</label><input class="form-input" id="lit-url" placeholder="https://doi.org/..."></div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label class="form-label" style="margin:0">Catatan / Ringkasan</label>
+          <button class="btn-sm" onclick="extractSummaryAI()" id="extract-btn"><i class="ph ph-sparkle"></i> Ekstrak AI</button>
+        </div>
+        <textarea class="form-textarea" id="lit-summary" placeholder="Tulis ringkasan atau poin penting dari referensi ini..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('lit-modal')">Batal</button>
+      <button class="btn btn-primary" onclick="saveLiterature()"><i class="ph ph-floppy-disk"></i> Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Todo Modal -->
+<div class="modal-overlay" id="todo-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-icon" style="background:var(--purple-l);color:var(--purple)"><i class="ph-fill ph-list-checks"></i></div>
+        <div><div class="modal-title">Tambah Item Revisi</div></div>
+      </div>
+      <button class="icon-btn" onclick="closeModal('todo-modal')"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div><label class="form-label">Deskripsi Revisi *</label>
+        <textarea class="form-textarea" id="todo-text" placeholder="Contoh: Perbaiki rumusan masalah agar lebih spesifik..." style="min-height:80px"></textarea>
+      </div>
+      <div><label class="form-label">Kategori</label>
+        <select class="form-select" id="todo-category">
+          <option value="Pembimbing 1">Pembimbing 1</option>
+          <option value="Pembimbing 2">Pembimbing 2</option>
+          <option value="Penguji">Penguji</option>
+          <option value="Mandiri">Mandiri</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('todo-modal')">Batal</button>
+      <button class="btn btn-primary" onclick="saveTodo()"><i class="ph ph-plus-circle"></i> Tambah</button>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal-overlay" id="progress-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-icon"><i class="ph-fill ph-chart-line-up"></i></div>
+        <div><div class="modal-title">Update Progress Skripsi</div></div>
+      </div>
+      <button class="icon-btn" onclick="closeModal('progress-modal')"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="modal-body" id="progress-modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('progress-modal')">Batal</button>
+      <button class="btn btn-primary" onclick="saveProgress()"><i class="ph ph-floppy-disk"></i> Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-icon"><i class="ph-fill ph-user-circle"></i></div>
+        <div><div class="modal-title">Profil & Pengaturan</div></div>
+      </div>
+      <button class="icon-btn" onclick="closeModal('profile-modal')"><i class="ph ph-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div><label class="form-label">Nama Lengkap</label><input class="form-input" id="profile-name" placeholder="Nama Anda..."></div>
+      <div><label class="form-label">Program Studi</label><input class="form-input" id="profile-major" placeholder="Sistem Informasi..."></div>
+      <div><label class="form-label">Judul Skripsi</label><input class="form-input" id="profile-thesis" placeholder="Judul penelitian Anda..."></div>
+      <div><label class="form-label">Target Sidang</label><input class="form-input" type="date" id="profile-target"></div>
+      <div style="padding:12px;background:var(--amber-l);border-radius:var(--radius);border:1px solid var(--border)">
+        <p style="font-size:12px;color:var(--amber);font-weight:600;margin-bottom:4px"><i class="ph ph-warning"></i> Konfigurasi Google Apps Script</p>
+        <p style="font-size:12px;color:var(--ink2)">Masukkan URL Web App hasil deploy Apps Script Anda. Data akan disimpan ke Google Spreadsheet.</p>
+        <input class="form-input" id="profile-gas-url" placeholder="https://script.google.com/macros/s/..." style="margin-top:8px;font-size:12px">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('profile-modal')">Batal</button>
+      <button class="btn btn-primary" onclick="saveProfile()"><i class="ph ph-floppy-disk"></i> Simpan Profil</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i class="ph-fill ph-check-circle" id="toast-icon"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- ════════════ SCRIPTS ════════════ -->
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
+const ANTHROPIC_MODEL = 'claude-sonnet-4-20250514';
+
+// ─ Tool definitions ─────────────────────────────────────────
+const TOOLS = {
+  planning: [
+    { id:'title-gen', name:'Generator Judul Penelitian', icon:'ph-text-t', iconBg:'var(--purple-l)', iconColor:'var(--purple)', desc:'Hasilkan judul yang relevan dan kuat sesuai topik Anda.',
+      prompt: (i)=>`Anda adalah pakar metodologi penelitian akademik Indonesia. Berdasarkan topik berikut: "${i}", buatkan 5 judul skripsi yang SMART (Spesifik, Terukur, Akademis, Relevan, Tepat). Format: daftar bernomor dengan penjelasan singkat setiap judul.` },
+    { id:'framework', name:'Kerangka Berpikir', icon:'ph-tree-structure', iconBg:'var(--accent-l)', iconColor:'var(--accent)', desc:'Buat struktur pemikiran dari variabel hingga hipotesis.',
+      prompt: (i)=>`Anda adalah konsultan metodologi penelitian. Berdasarkan topik: "${i}", buat kerangka berpikir penelitian yang sistematis meliputi: variabel independen, variabel dependen, variabel mediasi/moderasi (jika ada), hubungan antar variabel, dan hipotesis. Sajikan dalam bentuk deskriptif yang jelas.` },
+    { id:'proposal', name:'Draft Proposal', icon:'ph-file-text', iconBg:'var(--green-l)', iconColor:'var(--green)', desc:'Buat kerangka awal proposal penelitian lengkap.',
+      prompt: (i)=>`Anda adalah akademisi berpengalaman. Buatkan draft proposal penelitian dari topik: "${i}". Sertakan: Judul Sementara, Latar Belakang (3 paragraf), Rumusan Masalah, Tujuan Penelitian, Manfaat Penelitian, dan Tinjauan Pustaka Singkat. Gunakan bahasa akademis Indonesia baku.` },
+    { id:'method', name:'Pemilihan Metode', icon:'ph-flask', iconBg:'var(--amber-l)', iconColor:'var(--amber)', desc:'Dapatkan rekomendasi metode penelitian yang tepat.',
+      prompt: (i)=>`Anda adalah metodolog penelitian. Berdasarkan topik/permasalahan: "${i}", rekomendasikan metode penelitian yang paling sesuai. Jelaskan: (1) Pendekatan penelitian (Kualitatif/Kuantitatif/Mixed), (2) Desain penelitian, (3) Teknik pengumpulan data, (4) Teknik analisis data, (5) Alasan pemilihan metode tersebut.` },
+    { id:'scope', name:'Batasan Penelitian', icon:'ph-bounding-box', iconBg:'var(--red-l)', iconColor:'var(--red)', desc:'Susun fokus riset beserta justifikasinya.',
+      prompt: (i)=>`Bantu saya menyusun batasan penelitian yang tepat untuk topik: "${i}". Berikan: (1) 4-5 batasan penelitian yang spesifik dan terukur, (2) Justifikasi setiap batasan, (3) Definisi operasional variabel utama. Gunakan bahasa akademis Indonesia.` },
+    { id:'hypothesis', name:'Generator Hipotesis', icon:'ph-target', iconBg:'var(--purple-l)', iconColor:'var(--purple)', desc:'Rumuskan hipotesis H0 dan H1 berdasarkan variabel.',
+      prompt: (i)=>`Berdasarkan topik dan variabel penelitian: "${i}", rumuskan hipotesis penelitian yang terdiri dari: H0 (Hipotesis Null) dan H1 (Hipotesis Alternatif) untuk setiap hubungan variabel. Tambahkan dasar teori singkat untuk setiap hipotesis.` },
+  ],
+  writing: [
+    { id:'paragraph-dev', name:'Pengembang Paragraf', icon:'ph-text-aa', iconBg:'var(--accent-l)', iconColor:'var(--accent)', desc:'Perluas poin singkat menjadi paragraf akademis.',
+      prompt: (i)=>`Anda adalah penulis akademik Indonesia. Kembangkan poin atau ide berikut menjadi 2-3 paragraf akademis yang kohesif, logis, dan menggunakan bahasa formal Indonesia baku: "${i}". Gunakan kalimat transisi yang baik dan pastikan alur argumen jelas.` },
+    { id:'background', name:'Latar Belakang', icon:'ph-article', iconBg:'var(--purple-l)', iconColor:'var(--purple)', desc:'Rumuskan konteks Das Sollen & Das Sein.',
+      prompt: (i)=>`Buat latar belakang penelitian akademik untuk topik: "${i}". Susun dengan struktur: (1) Paragraf pembuka: kondisi ideal/teori (Das Sollen), (2) Paragraf masalah: kondisi nyata/gap (Das Sein), (3) Paragraf bukti: data/fenomena pendukung, (4) Paragraf penutup: urgensi penelitian dan solusi yang ditawarkan. Gunakan bahasa Indonesia baku.` },
+    { id:'paraphrase', name:'Parafrase Anti-Plagiasi', icon:'ph-arrows-left-right', iconBg:'var(--amber-l)', iconColor:'var(--amber)', desc:'Parafrase teks untuk menghindari plagiarisme.',
+      prompt: (i)=>`Anda adalah pakar linguistik akademik. Parafrase teks berikut dengan mengubah struktur kalimat, mengganti kata dengan sinonim tepat, dan menyusun ulang urutan ide, TANPA mengubah makna aslinya. Hasil parafrase harus tetap akademis dan formal: "${i}"` },
+    { id:'translate', name:'Penerjemah Akademik', icon:'ph-translate', iconBg:'var(--teal-l)', iconColor:'var(--teal)', desc:'Terjemahkan teks ilmiah dengan mempertahankan terminologi.',
+      prompt: (i)=>`Terjemahkan teks akademik berikut ke bahasa Indonesia yang formal dan baku, pertahankan terminologi ilmiah asli (dalam tanda kurung jika perlu), dan pastikan tidak ada perubahan makna. Teks: "${i}"` },
+    { id:'conclusion', name:'Kesimpulan & Saran', icon:'ph-check-square-offset', iconBg:'var(--green-l)', iconColor:'var(--green)', desc:'Rangkum hasil temuan ke dalam Bab 5.',
+      prompt: (i)=>`Berdasarkan hasil penelitian berikut: "${i}", buatkan: (1) Kesimpulan penelitian yang menjawab setiap rumusan masalah secara ringkas dan jelas, (2) Saran praktis untuk pihak-pihak terkait, (3) Saran untuk penelitian selanjutnya. Gunakan bahasa Indonesia baku.` },
+    { id:'problem-statement', name:'Rumusan Masalah', icon:'ph-question', iconBg:'var(--amber-l)', iconColor:'var(--amber)', desc:'Rumuskan pertanyaan penelitian yang tajam.',
+      prompt: (i)=>`Berdasarkan fenomena/masalah: "${i}", rumuskan: (1) Identifikasi masalah (5-7 masalah teridentifikasi), (2) Batasan masalah (fokuskan pada 2-3 masalah utama), (3) Rumusan masalah dalam bentuk pertanyaan penelitian yang terukur dan operasional. Gunakan kaidah penulisan akademis Indonesia.` },
+  ],
+  finalisasi: [
+    { id:'ai-to-human', name:'AI to Human', icon:'ph-users', iconBg:'var(--amber-l)', iconColor:'var(--amber)', desc:'Optimasi teks AI agar terasa seperti tulisan manusia.',
+      prompt: (i)=>`Transformasi teks berikut agar terasa lebih alami, manusiawi, dan autentik layaknya ditulis oleh mahasiswa Indonesia yang berpengalaman. Pertahankan makna dan keformalan akademis, namun hilangkan ciri khas teks yang dihasilkan AI (terlalu sempurna, repetitif, atau kaku). Tambahkan nuansa personal yang wajar: "${i}"` },
+    { id:'abstract', name:'Generator Abstrak', icon:'ph-file-text', iconBg:'var(--accent-l)', iconColor:'var(--accent)', desc:'Buat abstrak otomatis dari draf skripsi.',
+      prompt: (i)=>`Buat abstrak penelitian akademik (200-250 kata) dari informasi berikut: "${i}". Abstrak harus mencakup: (1) Latar belakang singkat, (2) Tujuan penelitian, (3) Metode penelitian, (4) Hasil utama, (5) Kesimpulan dan kontribusi. Sertakan 3-5 kata kunci. Gunakan bahasa Indonesia baku.` },
+    { id:'defense-q', name:'Prediksi Pertanyaan Sidang', icon:'ph-chalkboard-teacher', iconBg:'var(--red-l)', iconColor:'var(--red)', desc:'Daftar pertanyaan penguji beserta rekomendasi jawaban.',
+      prompt: (i)=>`Berdasarkan topik penelitian: "${i}", buatkan 10 pertanyaan sidang skripsi yang kemungkinan akan diajukan dosen penguji, beserta panduan jawaban singkat untuk setiap pertanyaan. Kelompokkan berdasarkan: Bab 1 (3 pertanyaan), Bab 2 (2 pertanyaan), Bab 3 (3 pertanyaan), Bab 4-5 (2 pertanyaan).` },
+    { id:'to-article', name:'Konversi ke Artikel Ilmiah', icon:'ph-scroll', iconBg:'var(--green-l)', iconColor:'var(--green)', desc:'Konversi draf ke format publikasi jurnal.',
+      prompt: (i)=>`Konversi teks skripsi berikut ke format artikel ilmiah untuk jurnal akademik: "${i}". Susun dengan struktur IMRaD: Introduction, Methods, Results and Discussion, Conclusion. Sesuaikan gaya penulisan untuk publikasi jurnal (lebih ringkas, objective, dan terstruktur). Sertakan saran untuk judul artikel.` },
+    { id:'plagiarism', name:'Pemeriksa Plagiarisme', icon:'ph-shield-check', iconBg:'var(--surface2)', iconColor:'var(--ink2)', desc:'Cek orisinalitas dan skor kemiripan teks.',
+      prompt: (i)=>`Analisis teks berikut untuk deteksi potensi plagiarisme: "${i}". Identifikasi: (1) Frasa atau kalimat yang terdengar umum/klise dan berisiko plagiarisme, (2) Bagian yang perlu diparafrase lebih lanjut, (3) Rekomendasi perbaikan spesifik untuk setiap bagian berisiko, (4) Estimasi skor orisinalitas (catatan: ini bukan tool Turnitin resmi).` },
+    { id:'grammar', name:'Pemeriksa Tata Bahasa', icon:'ph-spellcheck', iconBg:'var(--teal-l)', iconColor:'var(--teal)', desc:'Perbaiki PUEBI, typo, dan kualitas diksi.',
+      prompt: (i)=>`Periksa dan perbaiki teks berikut berdasarkan kaidah PUEBI (Pedoman Umum Ejaan Bahasa Indonesia) dan tata bahasa baku Indonesia: "${i}". Berikan: (1) Teks yang sudah diperbaiki, (2) Daftar kesalahan yang ditemukan dengan penjelasan koreksinya, (3) Saran peningkatan diksi akademik.` },
+    { id:'slide-content', name:'Penyusun Konten Slide', icon:'ph-presentation-chart', iconBg:'var(--purple-l)', iconColor:'var(--purple)', desc:'Pecah teks panjang menjadi poin presentasi ringkas.',
+      prompt: (i)=>`Ubah teks berikut menjadi konten slide presentasi sidang skripsi yang efektif: "${i}". Format output: untuk setiap slide, berikan JUDUL SLIDE dan 3-5 poin bullet yang padat dan jelas. Buat minimal 8 slide termasuk: Cover, Latar Belakang, Rumusan Masalah, Tujuan, Metodologi, Hasil & Pembahasan, Kesimpulan, Saran.` },
+    { id:'review', name:'Review Draft Penelitian', icon:'ph-clipboard-text', iconBg:'var(--red-l)', iconColor:'var(--red)', desc:'Evaluasi dan masukan ala dosen penguji.',
+      prompt: (i)=>`Berperan sebagai dosen penguji skripsi yang kritis. Review teks penelitian berikut: "${i}". Berikan: (1) Kelebihan penelitian, (2) Kelemahan dan kekurangan (minimal 5 poin spesifik), (3) Saran perbaikan yang konkret dan actionable, (4) Penilaian kelayakan (Layak Sidang/Perlu Revisi Minor/Perlu Revisi Mayor) beserta alasan.` },
+    { id:'thesis-to-slide', name:'Thesis to Slide', icon:'ph-projector-screen', iconBg:'var(--accent-l)', iconColor:'var(--accent)', desc:'Ubah struktur skripsi menjadi presentasi sidang.',
+      prompt: (i)=>`Buat konten presentasi sidang skripsi lengkap dari informasi berikut: "${i}". Susun 12-15 slide dengan konten yang padat untuk presentasi 15 menit. Setiap slide: judul + poin kunci + catatan pembicara singkat.` },
+    { id:'preface', name:'Generator Kata Pengantar', icon:'ph-handshake', iconBg:'var(--amber-l)', iconColor:'var(--amber)', desc:'Buat kata pengantar dengan sentuhan personal.',
+      prompt: (i)=>`Buat kata pengantar skripsi yang personal namun tetap formal berdasarkan informasi: "${i}". Sertakan: (1) Ungkapan syukur, (2) Deskripsi singkat penelitian, (3) Ucapan terima kasih kepada: Allah SWT/Tuhan YME, orang tua, dosen pembimbing, teman-teman, (4) Permohonan saran dan kritik, (5) Tempat, tanggal, nama penulis. Panjang: 2-3 halaman.` },
+  ]
+};
+
+const BAB_NAMES = ['Pendahuluan','Tinjauan Pustaka','Metodologi','Hasil & Pembahasan','Kesimpulan'];
+
+// ═══════════════════════════════════════════════════════════
+//  STATE (in-memory + localStorage fallback)
+// ═══════════════════════════════════════════════════════════
+let state = {
+  sessionId: '',
+  userName: 'Mahasiswa',
+  userMajor: 'Sistem Informasi',
+  thesisTitle: '',
+  targetDate: '',
+  gasUrl: '',
+  progress: [0, 0, 0, 0, 0],
+  todos: [],
+  literature: [],
+  darkMode: false,
+  currentTool: null,
+};
+
+function loadLocalState() {
+  const saved = localStorage.getItem('skripsiAI_state');
+  if (saved) {
+    try { Object.assign(state, JSON.parse(saved)); } catch(e) {}
+  }
+  if (!state.sessionId) {
+    state.sessionId = 'session_' + Math.random().toString(36).slice(2,11);
+    saveLocalState();
+  }
+}
+
+function saveLocalState() {
+  localStorage.setItem('skripsiAI_state', JSON.stringify(state));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GAS API (Google Apps Script Backend)
+// ═══════════════════════════════════════════════════════════
+async function gasGet(params) {
+  if (!state.gasUrl) return null;
+  const url = state.gasUrl + '?' + new URLSearchParams({ sessionId: state.sessionId, ...params });
+  try {
+    const r = await fetch(url);
+    return await r.json();
+  } catch(e) { console.warn('GAS GET error:', e); return null; }
+}
+
+async function gasPost(body) {
+  if (!state.gasUrl) return null;
+  try {
+    const r = await fetch(state.gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: state.sessionId, ...body })
+    });
+    return await r.json();
+  } catch(e) { console.warn('GAS POST error:', e); return null; }
+}
+
+async function syncFromGAS() {
+  if (!state.gasUrl) { renderAll(); return; }
+  const data = await gasGet({ action: 'getAll' });
+  if (data && data.ok) {
+    if (data.todo) state.todos = data.todo;
+    if (data.literature) state.literature = data.literature;
+    if (data.progress) state.progress = [
+      +data.progress.bab1||0, +data.progress.bab2||0, +data.progress.bab3||0,
+      +data.progress.bab4||0, +data.progress.bab5||0
+    ];
+    saveLocalState();
+    showToast('Data dimuat dari Spreadsheet', 'success');
+    updateDbStatus(true);
+  } else {
+    updateDbStatus(false);
+  }
+  renderAll();
+}
+
+function updateDbStatus(ok) {
+  const el = document.getElementById('db-status');
+  if (!el) return;
+  el.textContent = ok ? 'Terhubung' : 'Offline (localStorage)';
+  el.className = 'status-badge ' + (ok ? 'ok' : 'info');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ANTHROPIC AI
+// ═══════════════════════════════════════════════════════════
+async function callAnthropicAPI(systemPrompt, userMessage, maxTokens = 1200) {
+  const res = await fetch(ANTHROPIC_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: ANTHROPIC_MODEL,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.content.map(b => b.text || '').join('');
+}
+
+// Streaming version for copilot
+async function streamAnthropicAPI(systemPrompt, userMessage, onChunk, onDone) {
+  const res = await fetch(ANTHROPIC_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: ANTHROPIC_MODEL,
+      max_tokens: 800,
+      stream: true,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }]
+    })
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let full = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const lines = decoder.decode(value).split('\n');
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const raw = line.slice(6).trim();
+      if (raw === '[DONE]' || !raw) continue;
+      try {
+        const obj = JSON.parse(raw);
+        const chunk = obj.delta?.text || '';
+        if (chunk) { full += chunk; onChunk(chunk); }
+      } catch(e) {}
+    }
+  }
+  onDone(full);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UI: TOOL MODAL
+// ═══════════════════════════════════════════════════════════
+function openTool(tool) {
+  state.currentTool = tool;
+  document.getElementById('modal-title').textContent = tool.name;
+  document.getElementById('modal-desc').textContent = tool.desc;
+  document.getElementById('modal-icon').className = `ph-fill ${tool.icon}`;
+  document.getElementById('modal-icon-wrap').style.background = tool.iconBg;
+  document.getElementById('modal-icon-wrap').style.color = tool.iconColor;
+  document.getElementById('tool-input').value = '';
+  document.getElementById('tool-char').textContent = '0';
+  document.getElementById('ai-output-wrap').style.display = 'none';
+  document.getElementById('ai-output').textContent = '';
+  const btn = document.getElementById('btn-generate');
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ph-bold ph-magic-wand"></i> Buat dengan AI';
+  openModal('tool-modal');
+}
+
+async function generateAI() {
+  const input = document.getElementById('tool-input').value.trim();
+  if (!input) { showToast('Mohon isi deskripsi terlebih dahulu', 'error'); return; }
+  if (input.length > 3000) { showToast('Teks terlalu panjang (maks 3000 karakter)', 'error'); return; }
+
+  const btn = document.getElementById('btn-generate');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ph-bold ph-spinner spinner"></i> Memproses...';
+
+  const outWrap = document.getElementById('ai-output-wrap');
+  const outEl = document.getElementById('ai-output');
+  outWrap.style.display = 'block';
+  outEl.textContent = '⏳ AI sedang menyusun hasil...';
+
+  try {
+    const systemPrompt = 'Anda adalah asisten akademik cerdas untuk mahasiswa Indonesia yang sedang mengerjakan skripsi. Berikan respons yang terstruktur, jelas, dan menggunakan bahasa Indonesia akademis yang baku dan formal. Jangan gunakan bahasa Inggris kecuali untuk istilah teknis yang lazim.';
+    const userPrompt = state.currentTool.prompt(input);
+    const result = await callAnthropicAPI(systemPrompt, userPrompt, 1500);
+    const clean = DOMPurify.sanitize(result, { ALLOWED_TAGS: [] });
+    outEl.textContent = clean;
+
+    // Log ke GAS
+    gasPost({ action: 'logAI', toolName: state.currentTool.id, inputLength: input.length, outputLength: clean.length, model: ANTHROPIC_MODEL });
+
+    showToast('Hasil berhasil dibuat!', 'success');
+  } catch(err) {
+    outEl.textContent = '❌ Terjadi kesalahan: ' + err.message + '\n\nPastikan Anda mengakses melalui proxy backend yang meneruskan API key. Lihat petunjuk di README.';
+    showToast('Gagal memanggil AI: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ph-bold ph-magic-wand"></i> Buat Ulang';
+  }
+}
+
+function copyOutput() {
+  const text = document.getElementById('ai-output').textContent;
+  navigator.clipboard.writeText(text).then(()=>showToast('Teks disalin!','success')).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('Teks disalin!','success');
+  });
+}
+
+function insertToEditor() {
+  const text = document.getElementById('ai-output').textContent;
+  if (!text) return;
+  closeModal('tool-modal');
+  switchView('editor');
+  const paper = document.getElementById('paper');
+  const wc = document.getElementById('word-count');
+  const p = document.createElement('p');
+  p.contentEditable = 'true';
+  p.textContent = text;
+  p.style.textAlign = 'justify';
+  p.style.marginBottom = '14px';
+  paper.insertBefore(p, wc);
+  p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  showToast('Teks disisipkan ke Editor!', 'success');
+  updateWordCount();
+  autoSaveEditor();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AI COPILOT (Editor)
+// ═══════════════════════════════════════════════════════════
+let copilotHistory = [];
+
+function appendCopilotMsg(text, role='ai', loading=false) {
+  const msgs = document.getElementById('copilot-messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}` + (loading?' loading':'');
+  if (loading) div.innerHTML = '<i class="ph-fill ph-spinner-gap spinner"></i> Menulis...';
+  else div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function copilotQuick(prompt) {
+  const sel = getEditorSelection();
+  const ctx = sel ? `Teks yang dipilih: "${sel}"\n\nPermintaan: ${prompt}` : prompt;
+  document.getElementById('copilot-input').value = ctx;
+  sendCopilot();
+}
+
+function askCopilotFromSelection() {
+  const sel = getEditorSelection();
+  if (!sel) { showToast('Pilih teks di editor terlebih dahulu','info'); return; }
+  document.getElementById('copilot-input').value = `Teks yang dipilih: "${sel.slice(0,500)}"\n\nMohon bantu perbaiki atau kembangkan teks ini.`;
+  if (window.innerWidth < 768) toggleCopilot();
+  document.getElementById('copilot-input').focus();
+}
+
+function getEditorSelection() {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return '';
+  const paper = document.getElementById('paper');
+  const range = sel.getRangeAt(0);
+  if (!paper.contains(range.commonAncestorContainer)) return '';
+  return sel.toString().trim();
+}
+
+function copilotEnter(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendCopilot(); }
+}
+
+async function sendCopilot() {
+  const inputEl = document.getElementById('copilot-input');
+  const input = inputEl.value.trim();
+  if (!input) return;
+  const sendBtn = document.getElementById('copilot-send');
+
+  appendCopilotMsg(input, 'user');
+  copilotHistory.push({ role: 'user', content: input });
+  inputEl.value = '';
+  sendBtn.disabled = true;
+
+  const loadingMsg = appendCopilotMsg('', 'ai', true);
+
+  const systemPrompt = `Anda adalah AI Copilot untuk penulisan skripsi akademik Indonesia. Bantu mahasiswa memperbaiki, mengembangkan, atau menganalisis teks akademis mereka. Berikan respons yang konkret, langsung, dan dalam bahasa Indonesia baku. Respons singkat (3-6 kalimat) kecuali diminta panjang.
+
+Konteks editor saat ini:
+${document.getElementById('paper').innerText.slice(0,800)}`;
+
+  try {
+    const recentHistory = copilotHistory.slice(-10);
+    let fullText = '';
+    loadingMsg.innerHTML = '';
+
+    await streamAnthropicAPI(systemPrompt, input, (chunk) => {
+      fullText += chunk;
+      loadingMsg.textContent = DOMPurify.sanitize(fullText, { ALLOWED_TAGS: [] });
+      document.getElementById('copilot-messages').scrollTop = document.getElementById('copilot-messages').scrollHeight;
+    }, (full) => {
+      copilotHistory.push({ role: 'assistant', content: full });
+    });
+  } catch(err) {
+    loadingMsg.textContent = '❌ ' + err.message;
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+function toggleCopilot() {
+  const panel = document.getElementById('copilot-panel');
+  panel.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EDITOR
+// ═══════════════════════════════════════════════════════════
+function execCmd(cmd) {
+  document.getElementById('paper').focus();
+  document.execCommand(cmd, false, null);
+}
+
+function clearFormat() {
+  document.execCommand('removeFormat', false, null);
+}
+
+function copySelectedText() {
+  const sel = getEditorSelection();
+  if (!sel) { showToast('Pilih teks terlebih dahulu','info'); return; }
+  navigator.clipboard.writeText(sel).then(()=>showToast('Teks disalin!','success')).catch(()=>{});
+}
+
+function updateWordCount() {
+  const text = document.getElementById('paper').innerText || '';
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  const wc = document.getElementById('word-count');
+  if (wc) wc.textContent = words.toLocaleString('id-ID') + ' kata';
+}
+
+let editorSaveTimeout;
+function autoSaveEditor() {
+  setSaveStatus('saving');
+  clearTimeout(editorSaveTimeout);
+  editorSaveTimeout = setTimeout(()=>{
+    const content = document.getElementById('paper').innerHTML;
+    localStorage.setItem('skripsiAI_editor', content);
+    setSaveStatus('saved');
+  }, 1500);
+}
+
+function setSaveStatus(s) {
+  const ind = document.getElementById('save-indicator');
+  const txt = document.getElementById('save-text');
+  ind.className = 'save-indicator ' + s;
+  txt.textContent = s==='saving' ? 'Menyimpan...' : 'Tersimpan';
+}
+
+function loadEditorContent() {
+  const saved = localStorage.getItem('skripsiAI_editor');
+  if (saved) {
+    document.getElementById('paper').innerHTML = DOMPurify.sanitize(saved);
+  }
+  updateWordCount();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROGRESS
+// ═══════════════════════════════════════════════════════════
+function renderProgress() {
+  const grid = document.getElementById('progress-grid');
+  if (!grid) return;
+  grid.innerHTML = state.progress.map((pct,i) => `
+    <div class="progress-item" style="${pct===0?'opacity:.5':''}">
+      <div class="progress-label">
+        <span class="progress-name">Bab ${i+1}</span>
+        <span class="progress-pct">${pct}%</span>
+      </div>
+      <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <p class="progress-sub">${BAB_NAMES[i]}</p>
+    </div>
+  `).join('');
+}
+
+function openProgressModal() {
+  const body = document.getElementById('progress-modal-body');
+  body.innerHTML = state.progress.map((pct,i)=>`
+    <div style="margin-bottom:14px">
+      <label class="form-label">Bab ${i+1} — ${BAB_NAMES[i]}</label>
+      <div class="progress-edit">
+        <input type="range" min="0" max="100" step="5" value="${pct}" id="prg-${i}" oninput="document.getElementById('prgv-${i}').textContent=this.value+'%'">
+        <span class="progress-val" id="prgv-${i}">${pct}%</span>
+      </div>
+    </div>
+  `).join('');
+  openModal('progress-modal');
+}
+
+async function saveProgress() {
+  state.progress = [0,1,2,3,4].map(i=>+document.getElementById('prg-'+i).value);
+  saveLocalState();
+  renderProgress();
+  closeModal('progress-modal');
+  showToast('Progress disimpan!','success');
+  await gasPost({ action:'saveProgress', bab1:state.progress[0], bab2:state.progress[1], bab3:state.progress[2], bab4:state.progress[3], bab5:state.progress[4] });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TODO / REVISI
+// ═══════════════════════════════════════════════════════════
+function renderTodos() {
+  // Dashboard preview (3 items)
+  const dash = document.getElementById('dashboard-todo');
+  if (dash) {
+    const items = state.todos.slice(0,4);
+    dash.innerHTML = items.length ? items.map(t=>todoItemHtml(t)).join('') : '<p style="font-size:13px;color:var(--ink3);padding:8px 0">Belum ada item revisi.</p>';
+  }
+  // Revision view
+  const revEl = document.getElementById('revision-list');
+  if (!revEl) return;
+  if (!state.todos.length) { revEl.innerHTML = '<p style="font-size:13px;color:var(--ink3);padding:20px 0;text-align:center">Belum ada item revisi.</p>'; return; }
+
+  const groups = {};
+  state.todos.forEach(t => {
+    const cat = t.category || 'Lainnya';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(t);
+  });
+
+  revEl.innerHTML = Object.entries(groups).map(([cat, items]) => `
+    <div class="revision-group">
+      <div class="revision-group-header">
+        <span>${cat}</span>
+        <span style="font-size:11px;font-weight:400;color:var(--ink3)">${items.filter(i=>i.checked=='true'||i.checked===true).length}/${items.length} selesai</span>
+      </div>
+      ${items.map(t=>`
+        <div class="revision-item" id="rev-${t.id}">
+          <input type="checkbox" ${(t.checked=='true'||t.checked===true)?'checked':''} onchange="toggleTodo('${t.id}',this.checked)">
+          <div class="rev-content">
+            <div class="rev-text ${(t.checked=='true'||t.checked===true)?'done':''}">${DOMPurify.sanitize(String(t.text||''))}</div>
+            <div class="rev-actions">
+              <button class="btn-sm" onclick="switchView('editor')"><i class="ph ph-arrow-right"></i> Editor</button>
+              <button class="btn-sm danger" onclick="deleteTodo('${t.id}')"><i class="ph ph-trash"></i> Hapus</button>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function todoItemHtml(t) {
+  return `<div class="todo-item" onclick="switchView('revisions')">
+    <input type="checkbox" ${(t.checked=='true'||t.checked===true)?'checked':''} onclick="event.stopPropagation();toggleTodo('${t.id}',this.checked)">
+    <span class="todo-text ${(t.checked=='true'||t.checked===true)?'done':''}">${DOMPurify.sanitize(String(t.text||''))}</span>
+  </div>`;
+}
+
+function addTodoModal() { openModal('todo-modal'); document.getElementById('todo-text').value=''; }
+
+async function saveTodo() {
+  const text = document.getElementById('todo-text').value.trim();
+  if (!text) { showToast('Isi deskripsi revisi terlebih dahulu','error'); return; }
+  const category = document.getElementById('todo-category').value;
+  const item = { id:'todo_'+Date.now(), sessionId:state.sessionId, text, checked:false, category };
+  state.todos.unshift(item);
+  saveLocalState();
+  renderTodos();
+  closeModal('todo-modal');
+  showToast('Item revisi ditambahkan','success');
+  await gasPost({ action:'saveTodo', ...item });
+}
+
+async function toggleTodo(id, checked) {
+  const t = state.todos.find(x=>x.id===id);
+  if (!t) return;
+  t.checked = checked;
+  saveLocalState();
+  renderTodos();
+  await gasPost({ action:'saveTodo', ...t, checked });
+}
+
+async function deleteTodo(id) {
+  state.todos = state.todos.filter(x=>x.id!==id);
+  saveLocalState();
+  renderTodos();
+  showToast('Item dihapus','success');
+  await gasPost({ action:'deleteTodo', id });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LITERATURE
+// ═══════════════════════════════════════════════════════════
+function renderLiterature(filter='') {
+  const el = document.getElementById('literature-list');
+  const badge = document.getElementById('lit-count-badge');
+  if (badge) badge.textContent = state.literature.length + ' Disimpan';
+  if (!el) return;
+
+  const filtered = filter ? state.literature.filter(l =>
+    (l.title||'').toLowerCase().includes(filter) ||
+    (l.authors||'').toLowerCase().includes(filter) ||
+    (l.journal||'').toLowerCase().includes(filter)
+  ) : state.literature;
+
+  if (!filtered.length) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--ink3);padding:20px 0;text-align:center">' + (filter?'Tidak ada hasil pencarian.':'Belum ada literatur. Klik "+ Tambah Jurnal".') + '</p>';
+    return;
+  }
+  el.innerHTML = filtered.map(l=>`
+    <div class="lit-item">
+      <div class="lit-icon" style="background:var(--red-l);color:var(--red)"><i class="ph-fill ph-file-pdf"></i></div>
+      <div class="lit-info">
+        <div class="lit-title" title="${DOMPurify.sanitize(String(l.title||''))}">${DOMPurify.sanitize(String(l.title||''))}</div>
+        <div class="lit-meta">${[l.authors,l.year,l.journal].filter(Boolean).join(' • ')}</div>
+        ${l.summary ? `<div style="font-size:11.5px;color:var(--ink2);margin-top:4px;line-height:1.5">${DOMPurify.sanitize(String(l.summary||'')).slice(0,120)}${(l.summary||'').length>120?'...':''}</div>` : ''}
+      </div>
+      <div class="lit-actions">
+        ${l.url?`<a href="${DOMPurify.sanitize(String(l.url||''))}" target="_blank" class="btn-sm"><i class="ph ph-link"></i></a>`:''}
+        <button class="btn-sm" onclick="editLiterature('${l.id}')"><i class="ph ph-pencil"></i></button>
+        <button class="btn-sm danger" onclick="deleteLiterature('${l.id}')"><i class="ph ph-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterLiterature() {
+  const q = document.getElementById('lit-search').value.toLowerCase();
+  renderLiterature(q);
+}
+
+function addLiteratureModal() {
+  document.getElementById('lit-modal-title').textContent = 'Tambah Jurnal';
+  document.getElementById('lit-id').value = '';
+  ['title','authors','year','journal','url','summary'].forEach(f => document.getElementById('lit-'+f).value='');
+  openModal('lit-modal');
+}
+
+function editLiterature(id) {
+  const l = state.literature.find(x=>x.id===id);
+  if (!l) return;
+  document.getElementById('lit-modal-title').textContent = 'Edit Jurnal';
+  document.getElementById('lit-id').value = id;
+  document.getElementById('lit-title').value = l.title||'';
+  document.getElementById('lit-authors').value = l.authors||'';
+  document.getElementById('lit-year').value = l.year||'';
+  document.getElementById('lit-journal').value = l.journal||'';
+  document.getElementById('lit-url').value = l.url||'';
+  document.getElementById('lit-summary').value = l.summary||'';
+  openModal('lit-modal');
+}
+
+async function saveLiterature() {
+  const title = document.getElementById('lit-title').value.trim();
+  if (!title) { showToast('Judul tidak boleh kosong','error'); return; }
+  const existingId = document.getElementById('lit-id').value;
+  const item = {
+    id: existingId || 'lit_'+Date.now(),
+    sessionId: state.sessionId,
+    title,
+    authors: document.getElementById('lit-authors').value.trim(),
+    year: document.getElementById('lit-year').value.trim(),
+    journal: document.getElementById('lit-journal').value.trim(),
+    url: document.getElementById('lit-url').value.trim(),
+    summary: document.getElementById('lit-summary').value.trim(),
+  };
+  if (existingId) state.literature = state.literature.map(x=>x.id===existingId?item:x);
+  else state.literature.unshift(item);
+  saveLocalState();
+  renderLiterature();
+  closeModal('lit-modal');
+  showToast('Literatur disimpan!','success');
+  await gasPost({ action:'saveLiterature', ...item });
+}
+
+async function deleteLiterature(id) {
+  if (!confirm('Hapus literatur ini?')) return;
+  state.literature = state.literature.filter(x=>x.id!==id);
+  saveLocalState();
+  renderLiterature();
+  showToast('Literatur dihapus','success');
+  await gasPost({ action:'deleteLiterature', id });
+}
+
+async function extractSummaryAI() {
+  const title = document.getElementById('lit-title').value.trim();
+  const journal = document.getElementById('lit-journal').value.trim();
+  if (!title) { showToast('Isi judul jurnal terlebih dahulu','error'); return; }
+  const btn = document.getElementById('extract-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="ph-bold ph-spinner spinner"></i>';
+  try {
+    const result = await callAnthropicAPI(
+      'Anda adalah asisten akademik yang membantu merangkum jurnal ilmiah.',
+      `Buat ringkasan singkat (3-4 kalimat) dari jurnal berjudul: "${title}"${journal?' yang diterbitkan di '+journal:''}. Fokuskan pada topik utama, metode yang digunakan, dan temuan/kontribusi utama. Jika tidak mengenal jurnal spesifik ini, buat ringkasan berdasarkan topik yang tersirat dari judul.`,
+      400
+    );
+    document.getElementById('lit-summary').value = result.trim();
+    showToast('Ringkasan berhasil diekstrak!','success');
+  } catch(e) { showToast('Gagal ekstrak: '+e.message,'error'); }
+  finally { btn.disabled=false; btn.innerHTML='<i class="ph ph-sparkle"></i> Ekstrak AI'; }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DATA UPLOAD
+// ═══════════════════════════════════════════════════════════
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processDataFile(file);
+});
+
+function handleFileUpload(e) { const f=e.target.files[0]; if(f) processDataFile(f); }
+
+async function processDataFile(file) {
+  if (file.size > 5 * 1024 * 1024) { showToast('File terlalu besar (maks 5MB)','error'); return; }
+  const resultEl = document.getElementById('data-result');
+  resultEl.innerHTML = '<p style="color:var(--ink2);font-size:13px"><i class="ph ph-spinner spinner"></i> Membaca file...</p>';
+
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const text = e.target.result.slice(0, 4000); // limit for API
+    resultEl.innerHTML = '<p style="color:var(--ink2);font-size:13px"><i class="ph ph-spinner spinner"></i> AI sedang menganalisis data...</p>';
+    try {
+      const result = await callAnthropicAPI(
+        'Anda adalah analis data untuk penelitian akademik Indonesia.',
+        `Analisis dataset CSV berikut dan berikan interpretasi naratif untuk Bab 4 skripsi:\n\n${text}\n\nBerikan: (1) Deskripsi statistik dasar, (2) Tren atau pola yang terlihat, (3) Interpretasi naratif yang bisa langsung digunakan untuk Bab 4 Hasil & Pembahasan.`,
+        1500
+      );
+      resultEl.innerHTML = `
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="ph ph-sparkle" style="color:var(--accent)"></i> Hasil Analisis AI</div>
+          <button class="btn-sm" onclick="copyText('data-analysis-text')"><i class="ph ph-copy"></i> Salin</button></div>
+          <p id="data-analysis-text" style="font-size:13px;white-space:pre-wrap;line-height:1.7">${DOMPurify.sanitize(result)}</p>
+        </div>`;
+    } catch(err) { resultEl.innerHTML = `<p style="color:var(--red);font-size:13px">Gagal: ${err.message}</p>`; }
+  };
+  reader.onerror = () => showToast('Gagal membaca file','error');
+  reader.readAsText(file);
+}
+
+function copyText(elId) {
+  const text = document.getElementById(elId)?.textContent||'';
+  navigator.clipboard.writeText(text).then(()=>showToast('Disalin!','success'));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROFILE
+// ═══════════════════════════════════════════════════════════
+function openProfileModal() {
+  document.getElementById('profile-name').value = state.userName;
+  document.getElementById('profile-major').value = state.userMajor;
+  document.getElementById('profile-thesis').value = state.thesisTitle;
+  document.getElementById('profile-target').value = state.targetDate;
+  document.getElementById('profile-gas-url').value = state.gasUrl;
+  openModal('profile-modal');
+}
+
+async function saveProfile() {
+  state.userName = document.getElementById('profile-name').value.trim() || 'Mahasiswa';
+  state.userMajor = document.getElementById('profile-major').value.trim() || 'Program Studi';
+  state.thesisTitle = document.getElementById('profile-thesis').value.trim();
+  state.targetDate = document.getElementById('profile-target').value;
+  state.gasUrl = document.getElementById('profile-gas-url').value.trim();
+  saveLocalState();
+  updateProfileUI();
+  closeModal('profile-modal');
+  showToast('Profil tersimpan!','success');
+  await gasPost({ action:'saveSession', userName:state.userName, major:state.userMajor, thesisTitle:state.thesisTitle, targetDate:state.targetDate });
+  if (state.gasUrl) syncFromGAS();
+}
+
+function updateProfileUI() {
+  const init = (state.userName||'M')[0].toUpperCase();
+  document.getElementById('user-avatar').textContent = init;
+  document.getElementById('user-name-display').textContent = state.userName;
+  document.getElementById('user-major-display').textContent = state.userMajor;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DARK MODE
+// ═══════════════════════════════════════════════════════════
+function toggleDark() {
+  state.darkMode = !state.darkMode;
+  applyDark();
+  saveLocalState();
+}
+function applyDark() {
+  document.documentElement.classList.toggle('dark', state.darkMode);
+  const icon = state.darkMode ? 'ph-sun' : 'ph-moon';
+  const lbl  = state.darkMode ? 'Mode Terang' : 'Mode Gelap';
+  const di = document.getElementById('dark-icon');
+  const dl = document.getElementById('dark-label');
+  const tdi= document.getElementById('topbar-dark-icon');
+  if(di) di.className = 'ph '+icon;
+  if(dl) dl.textContent = lbl;
+  if(tdi) tdi.className = 'ph '+icon;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  VIEW SWITCHING
+// ═══════════════════════════════════════════════════════════
+const VIEW_TITLES = {
+  dashboard:'Dashboard', planning:'Ide Penelitian', writing:'Asisten Penulisan',
+  literature:'Literatur & Referensi', data:'Pengolahan Data', finalisasi:'Finalisasi Akademik',
+  editor:'Smart Editor', revisions:'Revisi Dosen'
+};
+
+function switchView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const v = document.getElementById('view-'+viewId);
+  if (v) v.classList.add('active');
+  const btn = document.querySelector(`.nav-btn[data-view="${viewId}"]`);
+  if (btn) btn.classList.add('active');
+  document.getElementById('topbar-title').textContent = VIEW_TITLES[viewId]||'SkripsiAI';
+
+  if (viewId==='editor') {
+    loadEditorContent();
+    if (window.innerWidth>=768) {
+      document.getElementById('copilot-panel').classList.remove('open');
+    } else {
+      document.getElementById('copilot-toggle-btn').style.display='flex';
+    }
+  } else {
+    document.getElementById('copilot-toggle-btn').style.display='none';
+  }
+
+  if (viewId==='revisions') renderTodos();
+  if (viewId==='literature') renderLiterature();
+  if (window.innerWidth<768) closeSidebar();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SIDEBAR (mobile)
+// ═══════════════════════════════════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODAL HELPERS
+// ═══════════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) closeModal(m.id); });
+});
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>closeModal(m.id));
+});
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type='info') {
+  const t=document.getElementById('toast');
+  const i=document.getElementById('toast-icon');
+  const m=document.getElementById('toast-msg');
+  const icons={success:'ph-fill ph-check-circle',error:'ph-fill ph-x-circle',info:'ph-fill ph-info'};
+  i.className = icons[type]||icons.info;
+  m.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.className='toast',3200);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+function updateCharCount(el, outId) {
+  const max=3000;
+  const len=el.value.length;
+  document.getElementById(outId).textContent = len;
+  if(len>max) el.value=el.value.slice(0,max);
+}
+
+function renderToolGrid(containerId, tools) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = tools.map(t=>`
+    <div class="tool-card" onclick="openTool(TOOLS_MAP['${t.id}'])">
+      <div class="tool-icon" style="background:${t.iconBg};color:${t.iconColor}">
+        <i class="ph-fill ${t.icon}"></i>
+      </div>
+      <h4>${t.name}</h4>
+      <p>${t.desc}</p>
+    </div>
+  `).join('');
+}
+
+// Flat map for lookup
+const TOOLS_MAP = {};
+[...TOOLS.planning,...TOOLS.writing,...TOOLS.finalisasi].forEach(t=>TOOLS_MAP[t.id]=t);
+
+function renderAll() {
+  renderProgress();
+  renderTodos();
+  renderLiterature();
+  const litBadge = document.getElementById('lit-count-badge');
+  if (litBadge) litBadge.textContent = state.literature.length + ' Disimpan';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RESPONSIVE
+// ═══════════════════════════════════════════════════════════
+function checkMobile() {
+  const mobile = window.innerWidth < 768;
+  const menuBtn = document.getElementById('menu-btn');
+  if (menuBtn) menuBtn.style.display = mobile ? 'flex' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+(function init() {
+  loadLocalState();
+  applyDark();
+  updateProfileUI();
+  renderToolGrid('planning-tools', TOOLS.planning);
+  renderToolGrid('writing-tools', TOOLS.writing);
+  renderToolGrid('finalisasi-tools', TOOLS.finalisasi);
+  renderAll();
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+
+  // Editor events
+  const paper = document.getElementById('paper');
+  paper.addEventListener('input', () => { updateWordCount(); autoSaveEditor(); });
+
+  // Sync from GAS if URL configured
+  if (state.gasUrl) syncFromGAS(); else updateDbStatus(false);
+
+  // Show GAS setup hint if first time
+  if (!state.gasUrl) {
+    setTimeout(()=>showToast('Atur URL Apps Script di Profil untuk simpan ke Spreadsheet','info'),1500);
+  }
+})();
+</script>
+</body>
+</html>
