@@ -1,257 +1,938 @@
-// ============================================================
-//  SkripsiAI — Google Apps Script Backend
-//  Simpan ke Google Spreadsheet sebagai database
-//  Deploy sebagai: Web App → Anyone (or Anyone with Google Account)
-// ============================================================
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkripsiAI — Chapter Breakdown Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F5F0;--surface:#FFF;--surface2:#F0EDE6;
+  --border:#E2DDD6;--border2:#C8C2B8;
+  --text:#1A1714;--text2:#6B6560;--text3:#9E9890;
+  --accent:#2D6A4F;--accent-light:#E8F5EE;
+  --purple:#4A3B8C;--purple-light:#EDEAF8;
+  --gold:#B8860B;--gold-light:#FDF8E8;
+  --red:#C0392B;--red-light:#FBEAE8;
+  --blue:#1A5E9A;--blue-light:#EAF2FB;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.app-shell{display:grid;grid-template-columns:220px 1fr 300px;grid-template-rows:52px 1fr;height:100vh;overflow:hidden}
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 18px;background:var(--surface);border-bottom:1px solid var(--border)}
+.logo{font-family:'Lora',serif;font-size:17px;font-weight:600;color:var(--accent);margin-right:6px}
+.topbar-div{width:1px;height:22px;background:var(--border)}
+.breadcrumb{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+.breadcrumb strong{color:var(--text);font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.pom-widget{display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px}
+.pom-time{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;color:var(--text)}
+.pom-dot{width:7px;height:7px;border-radius:50%;background:var(--text3)}
+.pom-dot.running{background:var(--accent);animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.pom-btn-sm{padding:3px 9px;font-size:11px;font-weight:500;border:1px solid var(--border2);border-radius:20px;background:none;cursor:pointer;color:var(--text2);transition:all .15s;font-family:'DM Sans',sans-serif}
+.pom-btn-sm:hover{background:var(--surface);color:var(--text)}
+.pom-btn-sm.running{background:var(--accent);color:#fff;border-color:var(--accent)}
+.streak-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--gold-light);border:1px solid #E6C96A;border-radius:20px;font-size:12px;font-weight:500;color:var(--gold)}
+.btn{padding:6px 14px;font-size:12px;font-weight:500;border-radius:var(--radius);cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all .15s;font-family:'DM Sans',sans-serif}
+.btn:hover{border-color:var(--border2);color:var(--text)}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-accent:hover{background:#235A40;border-color:#235A40;color:#fff}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;padding:14px 0}
+.sidebar-section-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:10px 14px 5px}
+.tree-node{display:flex;align-items:center;gap:7px;padding:6px 10px 6px 14px;cursor:pointer;transition:background .12s;position:relative}
+.tree-node:hover{background:var(--surface2)}
+.tree-node.active{background:var(--accent-light)}
+.tree-node.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:0 2px 2px 0}
+.tree-subbab{padding-left:26px}
+.tree-para{padding-left:40px}
+.tree-icon{font-size:12px;flex-shrink:0}
+.tree-label{font-size:12px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tree-node.active .tree-label{color:var(--accent);font-weight:500}
+.tree-subbab .tree-label{font-size:11px;color:var(--text2)}
+.tree-para .tree-label{font-size:11px;color:var(--text3)}
+.main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.main-tabs{display:flex;align-items:center;gap:2px;padding:10px 16px 0;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.main-tab{padding:8px 14px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;font-weight:400}
+.main-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.editor-panel{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:11px}
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.section-card-header{display:flex;align-items:center;gap:9px;padding:9px 13px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.section-type-badge{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.badge-bab{background:var(--purple-light);color:var(--purple)}
+.badge-subbab{background:var(--accent-light);color:var(--accent)}
+.badge-para{background:var(--gold-light);color:var(--gold)}
+.section-title-input{flex:1;font-size:14px;font-weight:500;border:none;background:transparent;color:var(--text);font-family:'Lora',serif;outline:none;padding:0}
+.section-actions{display:flex;gap:5px;margin-left:auto}
+.icon-btn{height:26px;display:flex;align-items:center;justify-content:center;padding:0 8px;border:1px solid var(--border);border-radius:7px;background:none;cursor:pointer;color:var(--text2);font-size:11px;font-weight:500;transition:all .15s;font-family:'DM Sans',sans-serif;gap:4px}
+.icon-btn:hover{background:var(--surface);border-color:var(--border2);color:var(--text)}
+.icon-btn.danger:hover{background:var(--red-light);border-color:var(--red);color:var(--red)}
+.para-content-wrap{padding:11px 13px;display:flex;flex-direction:column;gap:9px}
+.para-textarea{width:100%;min-height:80px;border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;font-size:13px;line-height:1.7;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);resize:vertical;outline:none;transition:border-color .15s}
+.para-textarea:focus{border-color:var(--accent);background:var(--surface)}
+.para-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.word-count-chip{font-size:11px;color:var(--text3)}
+.autosave-indicator{font-size:11px;color:var(--accent);margin-left:auto;display:flex;align-items:center;gap:4px;opacity:0;transition:opacity .3s}
+.autosave-indicator.show{opacity:1}
+.autosave-dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.para-ai-bar{display:flex;gap:5px;flex-wrap:wrap}
+.para-ai-btn{padding:4px 10px;font-size:11px;font-weight:500;border:1px solid var(--border);border-radius:20px;background:none;cursor:pointer;color:var(--text2);transition:all .15s;font-family:'DM Sans',sans-serif}
+.para-ai-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+.para-ai-btn.ai-next{background:var(--accent);color:#fff;border-color:var(--accent)}
+.para-ai-btn.ai-next:hover{background:#235A40}
+.ai-reco-box{border:1px solid #B7D8C8;border-radius:var(--radius);background:#F0F9F4;overflow:hidden;display:none}
+.ai-reco-box.show{display:block}
+.ai-reco-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--accent-light);border-bottom:1px solid #B7D8C8;font-size:12px;font-weight:500;color:var(--accent)}
+.ai-reco-content{padding:10px 12px}
+.ai-reco-text{font-size:13px;line-height:1.65;color:var(--text);margin-bottom:10px}
+.ref-list{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.ref-item{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+.ref-item-header{padding:8px 10px}
+.ref-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px;line-height:1.4}
+.ref-meta{font-size:11px;color:var(--text2)}
+.ref-summary{font-size:11px;color:var(--text2);line-height:1.55;padding:6px 10px 8px;border-top:1px solid var(--border);display:none}
+.ref-summary.show{display:block}
+.ref-links{display:flex;gap:5px;padding:0 10px 8px;flex-wrap:wrap}
+.ref-link{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);text-decoration:none;color:var(--text2);cursor:pointer;background:var(--bg);font-family:'DM Sans',sans-serif;transition:all .15s}
+.ref-link:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.ref-link.dl{border-color:var(--purple);color:var(--purple);background:var(--purple-light)}
+.add-section-row{display:flex;gap:9px;padding:4px 0}
+.add-section-btn{flex:1;padding:8px;border:1.5px dashed var(--border2);border-radius:var(--radius);background:none;cursor:pointer;font-size:12px;font-weight:500;color:var(--text3);transition:all .15s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px}
+.add-section-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.paste-zone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:14px;background:var(--surface);box-shadow:var(--shadow)}
+.paste-zone-label{font-size:12px;color:var(--text2);margin-bottom:7px;font-weight:500}
+.paste-textarea{width:100%;height:72px;resize:none;border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);outline:none;line-height:1.6}
+.paste-textarea:focus{border-color:var(--accent);background:var(--surface)}
+.paste-actions{display:flex;gap:8px;margin-top:8px;align-items:center}
 
-const SHEET_NAMES = {
-  SESSIONS: 'Sessions',
-  TODO: 'TodoItems',
-  LITERATURE: 'Literature',
-  PROGRESS: 'Progress',
-  LOGS: 'AILogs'
+/* Preview */
+.preview-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.preview-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.preview-bab-heading{font-family:'Lora',serif;font-size:16px;font-weight:600;color:var(--text);padding:10px 0 6px;border-bottom:2px solid var(--border);margin-bottom:14px;margin-top:6px}
+
+/* Subbab preview block */
+.preview-subbab-block{margin-bottom:16px;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow)}
+.preview-subbab-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 18px;background:var(--surface);cursor:pointer;border-bottom:1px solid var(--border)}
+.preview-subbab-header:hover{background:var(--surface2)}
+.preview-subbab-title{font-family:'Lora',serif;font-size:14px;font-weight:600;font-style:italic;color:var(--text)}
+.preview-subbab-chevron{font-size:11px;color:var(--text3);transition:transform .2s}
+.preview-subbab-chevron.closed{transform:rotate(-90deg)}
+.preview-subbab-content{background:var(--surface);padding:16px 24px}
+.preview-para-text{font-family:'Lora',serif;font-size:13px;line-height:1.9;color:var(--text);margin-bottom:10px;text-align:justify;text-indent:1.2em}
+.preview-para-placeholder{font-size:13px;color:var(--text3);font-style:italic;border:1.5px dashed var(--border);padding:9px;border-radius:6px;margin-bottom:10px;font-family:'DM Sans',sans-serif}
+
+/* Subbab AI Panel */
+.subbab-ai-panel{border-top:1px solid var(--border);background:var(--bg)}
+.subbab-ai-tabs{display:flex;background:var(--surface2);border-bottom:1px solid var(--border)}
+.subbab-ai-tab{flex:1;padding:9px 6px;font-size:11px;font-weight:500;text-align:center;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);transition:all .15s}
+.subbab-ai-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--surface)}
+
+/* Ringkasan */
+.ringkasan-body{padding:14px 16px;background:var(--surface)}
+.section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px}
+.ringkasan-text{font-size:13px;line-height:1.75;color:var(--text);min-height:52px}
+.regen-bar{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+
+/* Hafalan */
+.hafalan-body{padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:10px}
+.hafalan-list{display:flex;flex-direction:column;gap:7px}
+.hafalan-item{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);overflow:hidden}
+.hafalan-item-inner{display:flex;align-items:flex-start;gap:8px;padding:9px 10px}
+.hafalan-num{width:20px;height:20px;flex-shrink:0;border-radius:50%;background:var(--accent-light);color:var(--accent);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.hafalan-text{flex:1;font-size:12px;line-height:1.6;color:var(--text);outline:none;min-height:18px;word-break:break-word}
+.hafalan-text:focus{background:var(--accent-light);border-radius:4px;padding:2px 4px}
+.hafalan-btns{display:flex;gap:4px;flex-shrink:0}
+.haf-btn{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:5px;background:none;cursor:pointer;font-size:12px;transition:all .15s}
+.haf-btn:hover{border-color:var(--border2);background:var(--surface2)}
+.haf-btn.locked{background:var(--accent-light);border-color:var(--accent)}
+.haf-btn.del:hover{background:var(--red-light);border-color:var(--red)}
+.hafalan-locked-badge{font-size:10px;color:var(--accent);padding:2px 6px;background:var(--accent-light);border-radius:20px;font-weight:500;display:inline-flex;align-items:center;gap:3px}
+.hafalan-empty{font-size:12px;color:var(--text3);text-align:center;padding:20px 16px;font-style:italic;border:1px dashed var(--border);border-radius:var(--radius)}
+.gen-btn{width:100%;padding:9px;font-size:12px;font-weight:500;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.gen-btn:hover{background:#235A40}
+.gen-btn.purple{background:var(--purple)}
+.gen-btn.purple:hover{background:#3A2D7A}
+
+/* Presentasi */
+.presentasi-body{padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:10px}
+.pres-card{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.pres-card-hd{display:flex;align-items:center;gap:7px;padding:7px 11px;font-size:11px;font-weight:600;border-bottom:1px solid var(--border)}
+.pres-card-hd.op{background:#EAF2FB;color:var(--blue)}
+.pres-card-hd.isi{background:var(--accent-light);color:var(--accent)}
+.pres-card-hd.pet{background:var(--purple-light);color:var(--purple)}
+.pres-card-body{padding:9px 11px;font-size:12px;line-height:1.7;color:var(--text);background:var(--surface);min-height:42px;outline:none}
+.pres-card-body:focus{background:var(--surface2)}
+.pres-card-body.empty{color:var(--text3);font-style:italic}
+.pres-footer{display:flex;align-items:center;gap:8px;margin-top:4px;padding-top:10px;border-top:1px solid var(--border)}
+.saved-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:20px;background:var(--accent-light);color:var(--accent);font-weight:500}
+.unsaved-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:20px;background:var(--gold-light);color:var(--gold);font-weight:500}
+
+/* Right panel */
+.right-panel{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.rp-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.rp-tab{flex:1;padding:9px 4px;font-size:11px;font-weight:400;text-align:center;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.rp-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.rp-body{flex:1;overflow-y:auto;padding:13px}
+.rp-sec{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:7px;margin-top:13px}
+.rp-sec:first-child{margin-top:0}
+.cop-box{border:1px solid var(--border);border-radius:var(--radius);padding:9px;margin-bottom:7px;background:var(--bg)}
+.cop-label{font-size:11px;font-weight:600;color:var(--purple);margin-bottom:3px}
+.cop-text{font-size:12px;color:var(--text2);line-height:1.55}
+.cop-apply{font-size:11px;margin-top:5px;padding:3px 9px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s}
+.cop-apply:hover{border-color:var(--purple);color:var(--purple);background:var(--purple-light)}
+.cop-ta{width:100%;height:56px;resize:none;border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s;line-height:1.5}
+.cop-ta:focus{border-color:var(--accent);background:var(--surface)}
+.cop-send{width:100%;margin-top:5px;padding:7px;font-size:12px;font-weight:500;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
+.cop-send:hover{background:#235A40}
+.cite-fmt-bar{display:flex;gap:4px;margin-bottom:10px}
+.cite-fmt-btn{flex:1;padding:5px;font-size:11px;font-weight:500;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s}
+.cite-fmt-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+.cite-card{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:7px}
+.cite-top{padding:8px 10px}
+.cite-title{font-size:12px;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:2px}
+.cite-meta{font-size:11px;color:var(--text2)}
+.cite-fmt{padding:6px 10px;background:var(--bg);font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text2);line-height:1.5;border-top:1px solid var(--border)}
+.cite-actions{display:flex;gap:4px;padding:5px 10px;border-top:1px solid var(--border)}
+.cite-btn{font-size:11px;padding:3px 9px;border:1px solid var(--border);border-radius:5px;background:none;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center}
+.cite-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.stat-card{padding:8px 10px;background:var(--surface2);border-radius:var(--radius)}
+.stat-lbl{font-size:10px;color:var(--text3);margin-bottom:2px}
+.stat-val{font-size:20px;font-weight:500;color:var(--text)}
+.bab-prog{margin-bottom:9px}
+.bab-prog-hd{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--text2)}
+.bab-prog-bar{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.bab-prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s}
+.ai-thinking{display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:100;align-items:center;justify-content:center}
+.ai-thinking.show{display:flex}
+.ai-thinking-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 30px;text-align:center;box-shadow:var(--shadow-md)}
+.ai-spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-thinking-text{font-size:13px;color:var(--text2)}
+.toast{position:fixed;bottom:18px;right:18px;padding:9px 15px;background:var(--text);color:#fff;border-radius:var(--radius);font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;z-index:999;max-width:320px}
+.toast.show{opacity:1;transform:translateY(0)}
+.hidden{display:none!important}
+.chip-konteks{background:#E1F5EE;color:#0F6E56}
+.chip-dassein{background:#FAECE7;color:#993C1D}
+.chip-solusi{background:#E6F1FB;color:#185FA5}
+.chip-urgensi{background:#FAEEDA;color:#854F0B}
+.chip-teori{background:#EEEDFE;color:#534AB7}
+.chip-metode{background:#FBEAF0;color:#993556}
+.chip-analisis{background:#EAF3DE;color:#3B6D11}
+.chip-kesimpulan{background:#F1EFE8;color:#5F5E5A}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+<!-- Topbar -->
+<div class="topbar">
+  <span class="logo">SkripsiAI</span>
+  <div class="topbar-div"></div>
+  <div class="breadcrumb"><span>Chapter Studio</span><span>›</span><strong>BAB I</strong></div>
+  <div class="topbar-right">
+    <div class="streak-badge">🔥 7 hari</div>
+    <div class="pom-widget">
+      <div class="pom-dot" id="pom-dot"></div>
+      <span class="pom-time" id="pom-display">25:00</span>
+      <button class="pom-btn-sm" id="pom-start-btn" onclick="togglePom()">Mulai</button>
+      <button class="pom-btn-sm" onclick="resetPom()">↺</button>
+    </div>
+    <button class="btn" onclick="switchMain('preview')">👁 Pratinjau</button>
+    <button class="btn btn-accent" onclick="exportPDF()">⬇ PDF</button>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-section-title">Struktur Dokumen</div>
+  <div id="tree-root"></div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="main-tabs">
+    <div class="main-tab active" onclick="switchMain('editor')">✏️ Editor</div>
+    <div class="main-tab" onclick="switchMain('preview')">📄 Pratinjau Skripsi</div>
+  </div>
+  <div class="editor-panel" id="tab-editor">
+    <div class="paste-zone">
+      <div class="paste-zone-label">📋 Tempel teks untuk dipecah AI secara otomatis</div>
+      <textarea class="paste-textarea" id="paste-input" placeholder="Paste teks dari Word / Google Docs, lalu klik Pecah dengan AI..."></textarea>
+      <div class="paste-actions">
+        <button class="btn btn-accent" onclick="pecahDenganAI()">✦ Pecah dengan AI</button>
+        <button class="btn" onclick="document.getElementById('paste-input').value=''">Bersihkan</button>
+        <div class="autosave-indicator" id="global-autosave"><div class="autosave-dot"></div>Tersimpan</div>
+      </div>
+    </div>
+    <div id="sections-root"></div>
+    <div class="add-section-row">
+      <button class="add-section-btn" onclick="addBab()">＋ Bab</button>
+      <button class="add-section-btn" onclick="addSubbab(null)">＋ Sub-Bab</button>
+      <button class="add-section-btn" onclick="addParagraf(null)">＋ Paragraf</button>
+    </div>
+  </div>
+  <div class="editor-panel hidden" id="tab-preview">
+    <div class="preview-toolbar">
+      <span class="preview-label">Pratinjau Skripsi</span>
+      <button class="btn" onclick="copyFullText()">📋 Salin teks</button>
+      <button class="btn btn-accent" onclick="exportPDF()">⬇ Download PDF</button>
+      <span style="font-size:11px;color:var(--text3)">• Auto-update saat edit</span>
+    </div>
+    <div id="preview-wrap"></div>
+  </div>
+</div>
+
+<!-- Right Panel -->
+<div class="right-panel">
+  <div class="rp-tabs">
+    <div class="rp-tab active" onclick="switchRp('copilot',this)">Copilot</div>
+    <div class="rp-tab" onclick="switchRp('sitasi',this)">Sitasi</div>
+    <div class="rp-tab" onclick="switchRp('progress',this)">Progress</div>
+  </div>
+  <div class="rp-body" id="rp-copilot">
+    <div class="rp-sec">Rekomendasi aktif</div>
+    <div class="cop-box"><div class="cop-label">Struktur akademis</div><div class="cop-text">Paragraf aktif memiliki klaim kuat namun belum ada sitasi. Tambahkan minimal 1 referensi primer.</div><button class="cop-apply">Carikan referensi ↗</button></div>
+    <div class="cop-box"><div class="cop-label">Transisi paragraf</div><div class="cop-text">Pertimbangkan kata sambung lebih spesifik untuk transisi Das Sein → Urgensi.</div><button class="cop-apply">Lihat contoh ↗</button></div>
+    <div style="margin-top:10px"><div class="rp-sec">Tanya Copilot</div>
+    <textarea class="cop-ta" id="copilot-q" placeholder="Tanya sesuatu tentang paragraf aktif..."></textarea>
+    <button class="cop-send" onclick="sendCopilot()">Kirim ke AI ↗</button></div>
+  </div>
+  <div class="rp-body hidden" id="rp-sitasi">
+    <div class="rp-sec">Format sitasi</div>
+    <div class="cite-fmt-bar">
+      <button class="cite-fmt-btn active" onclick="selFmt('apa',this)">APA</button>
+      <button class="cite-fmt-btn" onclick="selFmt('ieee',this)">IEEE</button>
+      <button class="cite-fmt-btn" onclick="selFmt('chicago',this)">Chicago</button>
+    </div>
+    <div id="cite-list"></div>
+    <button class="btn btn-accent" style="width:100%;margin-top:8px;font-size:12px" onclick="genAllCites()">Generate semua daftar pustaka</button>
+  </div>
+  <div class="rp-body hidden" id="rp-progress">
+    <div class="rp-sec">Statistik hari ini</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-lbl">Paragraf diedit</div><div class="stat-val" id="stat-para">0</div></div>
+      <div class="stat-card"><div class="stat-lbl">Kata total</div><div class="stat-val" id="stat-words">0</div></div>
+      <div class="stat-card"><div class="stat-lbl">AI calls</div><div class="stat-val" id="stat-ai">0</div></div>
+      <div class="stat-card"><div class="stat-lbl">Bab aktif</div><div class="stat-val" id="stat-bab">1</div></div>
+    </div>
+    <div class="rp-sec">Progress per bab</div>
+    <div id="bab-prog-list"></div>
+  </div>
+</div>
+</div>
+
+<div class="ai-thinking" id="ai-thinking">
+  <div class="ai-thinking-card">
+    <div class="ai-spinner"></div>
+    <div class="ai-thinking-text" id="ai-thinking-text">AI sedang menganalisis...</div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════
+//  STATE
+// ══════════════════════════════
+const GAS_URL = '';
+let S = {
+  sections:[],citeFormat:'apa',aiCallCount:0,paraEditCount:0,
+  pomSec:25*60,pomRunning:false,pomInterval:null,
+  literature:[
+    {id:'l1',title:'Sistem Informasi Manajemen Berbasis Web untuk Pelayanan Publik',authors:'Suharto, A. & Wijaya, B.',year:'2022',journal:'Jurnal SISFO',volume:'11(2)',pages:'45–58',url:'https://jurnal.example.com/sisfo/2022',doi:'10.1234/sisfo.2022.11.2.45',summary:'Penelitian ini mengkaji implementasi SIM berbasis web pada 12 instansi pemerintah daerah, menunjukkan peningkatan efisiensi layanan 67% dan penurunan waktu proses rata-rata dari 14 hari menjadi 2 hari kerja.'},
+    {id:'l2',title:'User-Centered Design in E-Government Systems: A Systematic Review',authors:'Prasetyo, D., Santoso, R., & Hidayat, M.',year:'2021',journal:'IEEE Access',volume:'9',pages:'112045–112060',url:'https://ieeexplore.ieee.org/document/example',doi:'10.1109/ACCESS.2021.3103456',summary:'Review sistematis 48 studi tentang UCD pada sistem e-government. Penerapan UCD meningkatkan user satisfaction score rata-rata 34% dan mengurangi error rate pengguna hingga 52%.'},
+    {id:'l3',title:'Agile Development Methodology for Government Information Systems',authors:'Kurniawan, F. & Rahayu, S.',year:'2023',journal:'Journal of Information Systems Engineering',volume:'5(1)',pages:'1–18',url:'https://jise.example.ac.id/2023',doi:'10.5678/jise.2023.5.1.1',summary:'Studi kasus penggunaan Agile (Scrum) pada 6 proyek SIPD. Iterasi sprint 2 minggu terbukti mengurangi scope creep 78% dibanding waterfall tradisional.'}
+  ]
 };
 
-// ── Utility ────────────────────────────────────────────────
-function getOrCreateSheet(name, headers) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(name);
-  if (!sheet) {
-    sheet = ss.insertSheet(name);
-    sheet.appendRow(headers);
-    sheet.getRange(1, 1, 1, headers.length)
-      .setBackground('#1e3a8a')
-      .setFontColor('#ffffff')
-      .setFontWeight('bold');
-  }
-  return sheet;
+// ══════════════════════════════
+//  INIT
+// ══════════════════════════════
+function init(){
+  try{S.sections=JSON.parse(localStorage.getItem('skripsi_v2')||'null')||defaultSections();}
+  catch(e){S.sections=defaultSections();}
+  render();renderCitations();updateStats();
 }
 
-function timestamp() {
-  return new Date().toISOString();
+function mkAiData(){return{ringkasan:'',hafalan:[],presentasi:{opening:'',isi:'',penutup:''},presentasiSaved:false};}
+
+function defaultSections(){return[{id:'s1',type:'bab',title:'BAB I PENDAHULUAN',children:[
+  {id:'s2',type:'subbab',title:'1.1 Latar Belakang',aiData:mkAiData(),children:[
+    {id:'s3',type:'para',text:'Perkembangan teknologi informasi yang pesat dalam dua dekade terakhir telah mengubah secara fundamental cara manusia berinteraksi dengan informasi. Transformasi digital yang terjadi di berbagai sektor mendorong munculnya kebutuhan baru dalam pengelolaan data yang lebih efisien dan adaptif.',label:'Konteks & Fenomena',aiRecoShown:false},
+    {id:'s4',type:'para',text:'Namun demikian, banyak organisasi—khususnya instansi pemerintah daerah—masih menghadapi kesenjangan antara kebutuhan sistem ideal dengan kondisi infrastruktur yang tersedia. Studi pendahuluan menunjukkan 73% proses administrasi masih manual, menyebabkan rata-rata waktu layanan mencapai 14 hari kerja.',label:'Das Sein',aiRecoShown:false}
+  ]},
+  {id:'s5',type:'subbab',title:'1.2 Rumusan Masalah',aiData:mkAiData(),children:[
+    {id:'s6',type:'para',text:'Berdasarkan latar belakang di atas, rumusan masalah penelitian ini adalah: bagaimana merancang sistem informasi berbasis web yang dapat meningkatkan efisiensi pelayanan administrasi kependudukan secara signifikan dengan pendekatan User-Centered Design?',label:'Das Sollen',aiRecoShown:false}
+  ]}
+]}];}
+
+// ══════════════════════════════
+//  RENDER
+// ══════════════════════════════
+function render(){renderTree();renderSections();renderPreview();updateStats();}
+
+function renderTree(){
+  const root=document.getElementById('tree-root');root.innerHTML='';
+  S.sections.forEach(bab=>{
+    root.appendChild(mkTN(bab,'bab'));
+    (bab.children||[]).forEach(sub=>{root.appendChild(mkTN(sub,'subbab'));(sub.children||[]).forEach(p=>root.appendChild(mkTN(p,'para')));});
+  });
+}
+function mkTN(sec,type){
+  const d=document.createElement('div');
+  d.className='tree-node'+(type==='subbab'?' tree-subbab':type==='para'?' tree-para':'');
+  d.onclick=()=>scrollTo(sec.id);
+  d.innerHTML=`<span class="tree-icon">${{bab:'📖',subbab:'📄',para:'¶'}[type]}</span><span class="tree-label">${xe(type==='para'?(sec.text?sec.text.substring(0,26)+'…':'Paragraf baru'):sec.title)}</span>`;
+  return d;
 }
 
-function jsonResponse(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+function renderSections(){
+  const root=document.getElementById('sections-root');root.innerHTML='';
+  S.sections.forEach(bab=>root.appendChild(renderBab(bab)));
+}
+function renderBab(bab){
+  const w=document.createElement('div');
+  w.innerHTML=`<div id="sec-${bab.id}" class="section-card"><div class="section-card-header">
+    <span class="section-type-badge badge-bab">Bab</span>
+    <input class="section-title-input" value="${xe(bab.title)}" placeholder="Judul Bab..." oninput="updTitle('${bab.id}',this.value)">
+    <div class="section-actions"><button class="icon-btn" onclick="addSubbab('${bab.id}')">＋ sub-bab</button><button class="icon-btn danger" onclick="delSec('${bab.id}')">✕</button></div>
+  </div></div>`;
+  const ch=document.createElement('div');
+  ch.style.cssText='margin-left:14px;display:flex;flex-direction:column;gap:10px;margin-top:10px';
+  (bab.children||[]).forEach(sub=>ch.appendChild(renderSubbab(sub)));
+  ch.innerHTML+=`<button class="add-section-btn" style="width:100%" onclick="addSubbab('${bab.id}')">＋ Sub-Bab Baru</button>`;
+  const out=document.createElement('div');out.appendChild(w);out.appendChild(ch);return out;
+}
+function renderSubbab(sub){
+  const w=document.createElement('div');
+  w.innerHTML=`<div id="sec-${sub.id}" class="section-card"><div class="section-card-header" style="background:var(--accent-light)">
+    <span class="section-type-badge badge-subbab">Sub-Bab</span>
+    <input class="section-title-input" value="${xe(sub.title)}" placeholder="Judul Sub-Bab..." oninput="updTitle('${sub.id}',this.value)" style="font-style:italic">
+    <div class="section-actions"><button class="icon-btn" onclick="addParagraf('${sub.id}')">＋ ¶</button><button class="icon-btn danger" onclick="delSec('${sub.id}')">✕</button></div>
+  </div></div>`;
+  const ch=document.createElement('div');
+  ch.style.cssText='margin-left:14px;display:flex;flex-direction:column;gap:9px;margin-top:9px';
+  (sub.children||[]).forEach(para=>ch.appendChild(renderPara(para)));
+  ch.innerHTML+=`<button class="add-section-btn" style="width:100%" onclick="addParagraf('${sub.id}')">＋ Paragraf Baru</button>`;
+  const out=document.createElement('div');out.appendChild(w);out.appendChild(ch);return out;
+}
+function renderPara(para){
+  const wc=(para.text||'').trim().split(/\s+/).filter(Boolean).length;
+  const labels=['Konteks & Fenomena','Das Sein','Das Sollen','Urgensi','Kajian Teori','Metodologi','Analisis','Kesimpulan'];
+  const opts=labels.map(l=>`<option ${para.label===l?'selected':''}>${l}</option>`).join('');
+  const w=document.createElement('div');
+  w.id='sec-'+para.id;w.className='section-card';w.style.borderLeft='3px solid var(--gold)';
+  w.innerHTML=`<div class="section-card-header" style="background:var(--gold-light)">
+    <span class="section-type-badge badge-para">¶ Paragraf</span>
+    <select style="font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 6px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer" onchange="updParaLabel('${para.id}',this.value)">${opts}</select>
+    <div class="section-actions"><button class="icon-btn danger" onclick="delSec('${para.id}')">✕</button></div>
+  </div>
+  <div class="para-content-wrap">
+    <textarea class="para-textarea" id="ta-${para.id}" placeholder="Tulis paragraf di sini..." oninput="updParaTxt('${para.id}',this.value)">${xe(para.text||'')}</textarea>
+    <div class="para-meta">
+      <span class="word-count-chip" id="wc-${para.id}">${wc} kata</span>
+      <div class="autosave-indicator" id="save-${para.id}"><div class="autosave-dot"></div>Auto-saved</div>
+    </div>
+    <div class="para-ai-bar">
+      <button class="para-ai-btn" onclick="aiAct('${para.id}','parafrase')">🔄 Parafrase</button>
+      <button class="para-ai-btn" onclick="aiAct('${para.id}','kembangkan')">📝 Kembangkan</button>
+      <button class="para-ai-btn" onclick="aiAct('${para.id}','perbaiki')">✏️ Perbaiki</button>
+      <button class="para-ai-btn ai-next" onclick="getRecoNext('${para.id}')">✦ Rekomen. Lanjutan</button>
+    </div>
+    <div class="ai-reco-box ${para.aiRecoShown?'show':''}" id="reco-${para.id}">
+      <div class="ai-reco-header"><span>✦ Rekomendasi + Referensi Jurnal</span>
+        <button style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent)" onclick="hideReco('${para.id}')">✕</button>
+      </div>
+      <div class="ai-reco-content" id="reco-c-${para.id}">${para.recoContent||''}</div>
+    </div>
+  </div>`;
+  return w;
 }
 
-// ── Router ─────────────────────────────────────────────────
-function doGet(e) {
-  const action = e.parameter.action || '';
-  const sessionId = e.parameter.sessionId || 'default';
+// ══════════════════════════════
+//  PREVIEW with Subbab AI Panels
+// ══════════════════════════════
+function renderPreview(){
+  const wrap=document.getElementById('preview-wrap');if(!wrap)return;
+  wrap.innerHTML='';
+  if(!S.sections.length){wrap.innerHTML='<div style="font-size:13px;color:var(--text3);font-style:italic;text-align:center;padding:40px">Belum ada konten. Tambahkan di editor.</div>';return;}
+  S.sections.forEach(bab=>{
+    const h=document.createElement('div');h.className='preview-bab-heading';h.textContent=bab.title;wrap.appendChild(h);
+    (bab.children||[]).forEach(sub=>wrap.appendChild(buildSubbabBlock(sub)));
+  });
+}
 
-  try {
-    switch (action) {
-      case 'getAll':       return jsonResponse(getAllData(sessionId));
-      case 'getTodo':      return jsonResponse(getTodo(sessionId));
-      case 'getLiterature':return jsonResponse(getLiterature(sessionId));
-      case 'getProgress':  return jsonResponse(getProgress(sessionId));
-      default:             return jsonResponse({ error: 'Unknown action' });
+function buildSubbabBlock(sub){
+  sub.aiData=sub.aiData||mkAiData();
+  const block=document.createElement('div');
+  block.className='preview-subbab-block';
+  block.id='pvb-'+sub.id;
+
+  // Header
+  const hd=document.createElement('div');
+  hd.className='preview-subbab-header';
+  hd.innerHTML=`<span class="preview-subbab-title">${xe(sub.title)}</span><span class="preview-subbab-chevron" id="chev-${sub.id}">▼</span>`;
+  hd.onclick=()=>collapseSubbab(sub.id);
+  block.appendChild(hd);
+
+  // Paragraphs
+  const content=document.createElement('div');
+  content.className='preview-subbab-content';
+  content.id='pvc-'+sub.id;
+  const paras=sub.children||[];
+  if(!paras.length){content.innerHTML='<div class="preview-para-placeholder">Belum ada paragraf di sub-bab ini.</div>';}
+  else paras.forEach(p=>{
+    const el=document.createElement('div');
+    el.className=p.text&&p.text.trim()?'preview-para-text':'preview-para-placeholder';
+    el.textContent=p.text&&p.text.trim()?p.text:'[Paragraf kosong — isi di editor]';
+    content.appendChild(el);
+  });
+  block.appendChild(content);
+
+  // AI Panel
+  const panel=document.createElement('div');
+  panel.className='subbab-ai-panel';
+  panel.id='pvp-'+sub.id;
+
+  const allText=paras.map(p=>p.text||'').filter(Boolean).join('\n\n');
+
+  panel.innerHTML=`
+<div class="subbab-ai-tabs">
+  <div class="subbab-ai-tab active" id="stab-ring-${sub.id}" onclick="switchSubTab('${sub.id}','ring',this)">📋 Ringkasan AI</div>
+  <div class="subbab-ai-tab" id="stab-haf-${sub.id}" onclick="switchSubTab('${sub.id}','haf',this)">🧠 Hafalan</div>
+  <div class="subbab-ai-tab" id="stab-pres-${sub.id}" onclick="switchSubTab('${sub.id}','pres',this)">🎤 Cara Jelaskan</div>
+</div>
+
+<div id="st-ring-${sub.id}" class="ringkasan-body">
+  <div class="section-label">Ringkasan otomatis sub-bab ini</div>
+  <div class="ringkasan-text" id="ring-txt-${sub.id}">${sub.aiData.ringkasan||'<span style="color:var(--text3);font-style:italic">Klik Generate untuk membuat ringkasan AI dari sub-bab ini.</span>'}</div>
+  <div class="regen-bar" id="ring-bar-${sub.id}">
+    <button class="btn btn-accent" style="font-size:11px;padding:5px 12px" onclick="genRingkasan('${sub.id}')">✦ ${sub.aiData.ringkasan?'Regenerate':'Generate'} Ringkasan</button>
+    ${sub.aiData.ringkasan?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="copyRing('${sub.id}')">📋 Salin</button>`:''}
+  </div>
+</div>
+
+<div id="st-haf-${sub.id}" class="hafalan-body hidden">
+  <div class="section-label">Poin yang perlu diketahui & dihafalkan</div>
+  <div class="hafalan-list" id="haf-list-${sub.id}">${buildHafalanHTML(sub)}</div>
+  <button class="gen-btn" onclick="genHafalan('${sub.id}')">✦ ${(sub.aiData.hafalan||[]).length?'Tambah Rekomendasi Hafalan':'Generate Hafalan dari AI'}</button>
+  <div style="font-size:11px;color:var(--text3)">Klik ✏️ untuk edit teks, 🔒 untuk kunci permanen, ✕ untuk hapus</div>
+</div>
+
+<div id="st-pres-${sub.id}" class="presentasi-body hidden">
+  <div class="section-label">Cara menjelaskan ke dosen pembimbing</div>
+  ${buildPresentasiHTML(sub)}
+</div>`;
+
+  block.appendChild(panel);
+  return block;
+}
+
+function buildHafalanHTML(sub){
+  const haf=sub.aiData.hafalan||[];
+  if(!haf.length)return `<div class="hafalan-empty">Belum ada poin hafalan.<br>Klik "Generate" untuk membuat dari AI.</div>`;
+  return haf.map((item,i)=>`
+    <div class="hafalan-item" id="hi-${sub.id}-${i}">
+      <div class="hafalan-item-inner">
+        <div class="hafalan-num">${i+1}</div>
+        <div class="hafalan-text" contenteditable="true" id="ht-${sub.id}-${i}"
+          onblur="updHaf('${sub.id}',${i},this.innerText||this.textContent)">${xe(item.text)}</div>
+        <div class="hafalan-btns">
+          <button class="haf-btn ${item.locked?'locked':''}" title="${item.locked?'Dikunci — klik untuk buka kunci':'Kunci poin ini'}"
+            onclick="toggleLockHaf('${sub.id}',${i})">
+            ${item.locked?'🔒':'💾'}
+          </button>
+          <button class="haf-btn del" title="Hapus" onclick="delHaf('${sub.id}',${i})">✕</button>
+        </div>
+      </div>
+      ${item.locked?`<div style="padding:3px 10px 7px 38px"><span class="hafalan-locked-badge">🔒 Tersimpan permanen</span></div>`:''}
+    </div>`).join('');
+}
+
+function buildPresentasiHTML(sub){
+  const p=sub.aiData.presentasi||{opening:'',isi:'',penutup:''};
+  const saved=sub.aiData.presentasiSaved;
+  const noContent='<span style="color:var(--text3);font-style:italic">Klik Generate untuk membuat skrip penjelasan ke dosen.</span>';
+  return `
+    <div class="pres-card">
+      <div class="pres-card-hd op">🙋 Pembukaan ke Dosen</div>
+      <div class="pres-card-body ${p.opening?'':'empty'}" contenteditable="true" id="po-${sub.id}"
+        onfocus="clearEmpty(this)" onblur="updPres('${sub.id}','opening',this)">${p.opening||noContent}</div>
+    </div>
+    <div class="pres-card">
+      <div class="pres-card-hd isi">📌 Inti Penjelasan</div>
+      <div class="pres-card-body ${p.isi?'':'empty'}" contenteditable="true" id="pi-${sub.id}"
+        onfocus="clearEmpty(this)" onblur="updPres('${sub.id}','isi',this)">${p.isi||noContent}</div>
+    </div>
+    <div class="pres-card">
+      <div class="pres-card-hd pet">✅ Penutup & Antisipasi Pertanyaan</div>
+      <div class="pres-card-body ${p.penutup?'':'empty'}" contenteditable="true" id="pp-${sub.id}"
+        onfocus="clearEmpty(this)" onblur="updPres('${sub.id}','penutup',this)">${p.penutup||noContent}</div>
+    </div>
+    <div class="pres-footer">
+      ${saved?'<span class="saved-badge">🔒 Script tersimpan</span>':'<span class="unsaved-badge">⚠ Belum disimpan</span>'}
+      <button class="btn btn-accent" style="font-size:11px;padding:5px 12px;margin-left:auto" onclick="savePres('${sub.id}')">🔒 Simpan Script</button>
+      ${p.isi?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="copyPres('${sub.id}')">📋 Salin</button>`:''}
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn btn-accent" style="font-size:11px;padding:5px 12px" onclick="genPres('${sub.id}')">✦ ${p.isi?'Regenerate':'Generate'} Cara Jelaskan</button>
+    </div>`;
+}
+
+function switchSubTab(subId,tab,btn){
+  ['ring','haf','pres'].forEach(t=>{
+    const el=document.getElementById(`st-${t}-${subId}`);
+    if(el)el.classList.toggle('hidden',t!==tab);
+    const tb=document.getElementById(`stab-${t}-${subId}`);
+    if(tb)tb.classList.toggle('active',t===tab);
+  });
+}
+
+function collapseSubbab(subId){
+  const content=document.getElementById('pvc-'+subId);
+  const panel=document.getElementById('pvp-'+subId);
+  const chev=document.getElementById('chev-'+subId);
+  const isOpen=content.style.display!=='none';
+  content.style.display=isOpen?'none':'block';
+  panel.style.display=isOpen?'none':'block';
+  if(chev)chev.classList.toggle('closed',isOpen);
+}
+
+// ══════════════════════════════
+//  AI — Ringkasan
+// ══════════════════════════════
+async function genRingkasan(subId){
+  const sub=findSec(subId);if(!sub)return;
+  const txt=(sub.children||[]).map(p=>p.text||'').filter(Boolean).join('\n\n');
+  if(!txt.trim()){showToast('Isi paragraf terlebih dahulu!');return;}
+  const result=await callAI(
+    `Kamu adalah asisten akademis untuk mahasiswa Indonesia yang sedang menyusun skripsi.\n\nBuatkan ringkasan akademis padat dan jelas untuk sub-bab berikut. Maksimal 3 kalimat, bahasa Indonesia akademis formal, menangkap inti argumen/gagasan utama.\n\nSub-bab: "${sub.title}"\nIsi:\n${txt}\n\nKembalikan HANYA teks ringkasan, tanpa label atau penjelasan tambahan.`,
+    'Membuat ringkasan sub-bab...'
+  );
+  if(!result)return;
+  sub.aiData.ringkasan=result.trim();save();
+  const el=document.getElementById('ring-txt-'+subId);
+  if(el)el.textContent=sub.aiData.ringkasan;
+  const bar=document.getElementById('ring-bar-'+subId);
+  if(bar)bar.innerHTML=`<button class="btn btn-accent" style="font-size:11px;padding:5px 12px" onclick="genRingkasan('${subId}')">✦ Regenerate Ringkasan</button><button class="btn" style="font-size:11px;padding:5px 12px" onclick="copyRing('${subId}')">📋 Salin</button>`;
+  showToast('✓ Ringkasan berhasil dibuat!');
+}
+function copyRing(subId){const s=findSec(subId);if(s?.aiData?.ringkasan)navigator.clipboard.writeText(s.aiData.ringkasan).then(()=>showToast('Ringkasan disalin!'));}
+
+// ══════════════════════════════
+//  AI — Hafalan
+// ══════════════════════════════
+async function genHafalan(subId){
+  const sub=findSec(subId);if(!sub)return;
+  const txt=(sub.children||[]).map(p=>p.text||'').filter(Boolean).join('\n\n');
+  if(!txt.trim()){showToast('Isi paragraf terlebih dahulu!');return;}
+  const result=await callAI(
+    `Kamu adalah asisten akademis untuk mahasiswa Indonesia yang sedang menyusun skripsi.\n\nBerdasarkan sub-bab berikut, buat daftar 5 poin penting yang WAJIB diketahui dan dihafalkan mahasiswa untuk sidang/bimbingan. Poin harus: singkat (max 2 kalimat), mencakup fakta/angka/konsep kunci, mudah diingat.\n\nSub-bab: "${sub.title}"\nIsi:\n${txt}\n\nKembalikan HANYA JSON array (tanpa teks lain):\n[{"text":"Poin 1"},{"text":"Poin 2"},{"text":"Poin 3"},{"text":"Poin 4"},{"text":"Poin 5"}]`,
+    'AI menyusun poin hafalan...'
+  );
+  if(!result)return;
+  try{
+    const items=JSON.parse(result.replace(/```json|```/g,'').trim());
+    sub.aiData.hafalan=sub.aiData.hafalan||[];
+    items.forEach(item=>sub.aiData.hafalan.push({text:item.text||'',locked:false}));
+    save();
+    const listEl=document.getElementById('haf-list-'+subId);
+    if(listEl)listEl.innerHTML=buildHafalanHTML(sub);
+    showToast(`✓ ${items.length} poin hafalan ditambahkan!`);
+  }catch(e){showToast('Format AI tidak terbaca. Coba lagi.');}
+}
+
+function toggleLockHaf(subId,idx){
+  const sub=findSec(subId);if(!sub?.aiData)return;
+  sub.aiData.hafalan[idx].locked=!sub.aiData.hafalan[idx].locked;
+  save();
+  const listEl=document.getElementById('haf-list-'+subId);
+  if(listEl)listEl.innerHTML=buildHafalanHTML(sub);
+  showToast(sub.aiData.hafalan[idx].locked?'🔒 Poin dikunci permanen!':'Kunci dibuka');
+}
+function updHaf(subId,idx,text){const s=findSec(subId);if(s?.aiData){s.aiData.hafalan[idx].text=text;debouncedSave();}}
+function delHaf(subId,idx){
+  const sub=findSec(subId);if(!sub?.aiData)return;
+  if(sub.aiData.hafalan[idx].locked){showToast('Poin dikunci. Buka kunci dulu untuk hapus.');return;}
+  sub.aiData.hafalan.splice(idx,1);save();
+  const listEl=document.getElementById('haf-list-'+subId);
+  if(listEl)listEl.innerHTML=buildHafalanHTML(sub);
+}
+
+// ══════════════════════════════
+//  AI — Presentasi
+// ══════════════════════════════
+async function genPres(subId){
+  const sub=findSec(subId);if(!sub)return;
+  const txt=(sub.children||[]).map(p=>p.text||'').filter(Boolean).join('\n\n');
+  if(!txt.trim()){showToast('Isi paragraf terlebih dahulu!');return;}
+  const result=await callAI(
+    `Kamu adalah asisten akademis untuk mahasiswa Indonesia yang sedang menyusun skripsi.\n\nBuatkan skrip cara menjelaskan sub-bab ini ke dosen pembimbing saat sesi bimbingan. Format 3 bagian:\n1. PEMBUKAAN: Kalimat pembuka sopan dan lugas (1-2 kalimat)\n2. ISI: Penjelasan inti sistematis (3-5 kalimat, faktual)\n3. PENUTUP: Penutup + antisipasi 1 pertanyaan dosen yang mungkin ditanyakan (2-3 kalimat)\n\nSub-bab: "${sub.title}"\nIsi:\n${txt}\n\nKembalikan HANYA JSON (tanpa teks lain):\n{"opening":"...","isi":"...","penutup":"..."}`,
+    'Menyusun cara menjelaskan ke dosen...'
+  );
+  if(!result)return;
+  try{
+    const data=JSON.parse(result.replace(/```json|```/g,'').trim());
+    sub.aiData.presentasi={opening:data.opening||'',isi:data.isi||'',penutup:data.penutup||''};
+    sub.aiData.presentasiSaved=false;save();
+    // Update DOM directly
+    const op=document.getElementById('po-'+subId);
+    const isi=document.getElementById('pi-'+subId);
+    const pet=document.getElementById('pp-'+subId);
+    if(op){op.textContent=data.opening||'';op.classList.remove('empty');}
+    if(isi){isi.textContent=data.isi||'';isi.classList.remove('empty');}
+    if(pet){pet.textContent=data.penutup||'';pet.classList.remove('empty');}
+    showToast('✓ Skrip cara menjelaskan siap!');
+    // Refresh footer
+    const presTab=document.getElementById('st-pres-'+subId);
+    if(presTab){
+      const footer=presTab.querySelector('.pres-footer');
+      if(footer)footer.innerHTML=`<span class="unsaved-badge">⚠ Belum disimpan</span><button class="btn btn-accent" style="font-size:11px;padding:5px 12px;margin-left:auto" onclick="savePres('${subId}')">🔒 Simpan Script</button><button class="btn" style="font-size:11px;padding:5px 12px" onclick="copyPres('${subId}')">📋 Salin</button>`;
     }
-  } catch (err) {
-    return jsonResponse({ error: err.message });
-  }
+  }catch(e){showToast('Format AI tidak terbaca. Coba lagi.');}
 }
 
-function doPost(e) {
-  let body = {};
-  try {
-    body = JSON.parse(e.postData.contents);
-  } catch (err) {
-    return jsonResponse({ error: 'Invalid JSON body' });
-  }
-
-  const action = body.action || '';
-
-  try {
-    switch (action) {
-      case 'saveTodo':      return jsonResponse(saveTodo(body));
-      case 'deleteTodo':    return jsonResponse(deleteTodo(body));
-      case 'saveLiterature':return jsonResponse(saveLiterature(body));
-      case 'deleteLiterature': return jsonResponse(deleteLiterature(body));
-      case 'saveProgress':  return jsonResponse(saveProgress(body));
-      case 'logAI':         return jsonResponse(logAI(body));
-      case 'saveSession':   return jsonResponse(saveSession(body));
-      default:              return jsonResponse({ error: 'Unknown action' });
-    }
-  } catch (err) {
-    return jsonResponse({ error: err.message });
-  }
+function clearEmpty(el){if(el.classList.contains('empty')){el.textContent='';el.classList.remove('empty');}}
+function updPres(subId,field,el){
+  const txt=el.innerText||el.textContent||'';
+  const sub=findSec(subId);if(!sub?.aiData)return;
+  sub.aiData.presentasi[field]=txt;
+  sub.aiData.presentasiSaved=false;
+  debouncedSave();
 }
-
-// ── GET ALL (for initial load) ─────────────────────────────
-function getAllData(sessionId) {
-  return {
-    todo: getTodo(sessionId).data,
-    literature: getLiterature(sessionId).data,
-    progress: getProgress(sessionId).data,
-    ok: true
-  };
-}
-
-// ── TODO ───────────────────────────────────────────────────
-function getTodo(sessionId) {
-  const sheet = getOrCreateSheet(SHEET_NAMES.TODO,
-    ['id', 'sessionId', 'text', 'checked', 'category', 'createdAt', 'updatedAt']);
-
-  const rows = sheet.getDataRange().getValues();
-  const headers = rows[0];
-  const data = rows.slice(1)
-    .filter(r => r[1] === sessionId || sessionId === 'all')
-    .map(r => Object.fromEntries(headers.map((h, i) => [h, r[i]])));
-  return { ok: true, data };
-}
-
-function saveTodo(body) {
-  const sheet = getOrCreateSheet(SHEET_NAMES.TODO,
-    ['id', 'sessionId', 'text', 'checked', 'category', 'createdAt', 'updatedAt']);
-
-  const { id, sessionId, text, checked, category } = body;
-  const rows = sheet.getDataRange().getValues();
-
-  // find existing row
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] === id) {
-      sheet.getRange(i + 1, 1, 1, 7).setValues([[
-        id, sessionId, text, checked, category || '', rows[i][5], timestamp()
-      ]]);
-      return { ok: true, updated: true };
+function savePres(subId){
+  const sub=findSec(subId);if(!sub?.aiData)return;
+  ['opening','isi','penutup'].forEach(f=>{
+    const idMap={opening:'po',isi:'pi',penutup:'pp'};
+    const el=document.getElementById(idMap[f]+'-'+subId);
+    if(el)sub.aiData.presentasi[f]=el.innerText||el.textContent||'';
+  });
+  sub.aiData.presentasiSaved=true;save();
+  showToast('🔒 Script presentasi tersimpan permanen!');
+  const presTab=document.getElementById('st-pres-'+subId);
+  if(presTab){
+    const footer=presTab.querySelector('.pres-footer');
+    if(footer){
+      const badge=footer.querySelector('.unsaved-badge');
+      if(badge){badge.className='saved-badge';badge.innerHTML='🔒 Script tersimpan';}
     }
   }
-  // new row
-  sheet.appendRow([id, sessionId, text, checked, category || '', timestamp(), timestamp()]);
-  return { ok: true, created: true };
+}
+function copyPres(subId){
+  const sub=findSec(subId);if(!sub?.aiData?.presentasi)return;
+  const p=sub.aiData.presentasi;
+  navigator.clipboard.writeText(`PEMBUKAAN:\n${p.opening}\n\nINTI PENJELASAN:\n${p.isi}\n\nPENUTUP & ANTISIPASI:\n${p.penutup}`).then(()=>showToast('Script presentasi disalin!'));
 }
 
-function deleteTodo(body) {
-  const sheet = getOrCreateSheet(SHEET_NAMES.TODO,
-    ['id', 'sessionId', 'text', 'checked', 'category', 'createdAt', 'updatedAt']);
-  const rows = sheet.getDataRange().getValues();
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] === body.id) {
-      sheet.deleteRow(i + 1);
-      return { ok: true };
-    }
-  }
-  return { ok: false, error: 'Not found' };
+// ══════════════════════════════
+//  SECTION CRUD
+// ══════════════════════════════
+function addBab(){const id='b'+Date.now();S.sections.push({id,type:'bab',title:'BAB '+(S.sections.length+1),children:[]});save();render();setTimeout(()=>scrollTo(id),80);}
+function addSubbab(babId){
+  const id='sb'+Date.now();
+  const ns={id,type:'subbab',title:'Sub-Bab Baru',aiData:mkAiData(),children:[]};
+  if(babId){const b=findSec(babId);if(b){b.children=b.children||[];b.children.push(ns);}}
+  else if(S.sections.length){const l=S.sections[S.sections.length-1];l.children=l.children||[];l.children.push(ns);}
+  save();render();setTimeout(()=>scrollTo(id),80);
+}
+function addParagraf(subId){
+  const id='p'+Date.now();
+  const np={id,type:'para',text:'',label:'Konteks & Fenomena',aiRecoShown:false};
+  if(subId){const s=findSec(subId);if(s){s.children=s.children||[];s.children.push(np);}}
+  else{const lb=S.sections[S.sections.length-1];if(lb){const ls=(lb.children||[]).slice(-1)[0];if(ls){ls.children=ls.children||[];ls.children.push(np);}}}
+  save();render();setTimeout(()=>{scrollTo(id);document.getElementById('ta-'+id)?.focus();},80);
+}
+function delSec(id){if(!confirm('Hapus bagian ini?'))return;rmSec(S.sections,id);save();render();}
+function rmSec(arr,id){for(let i=0;i<arr.length;i++){if(arr[i].id===id){arr.splice(i,1);return true;}if(arr[i].children&&rmSec(arr[i].children,id))return true;}return false;}
+function findSec(id,arr){arr=arr||S.sections;for(const s of arr){if(s.id===id)return s;if(s.children){const f=findSec(id,s.children);if(f)return f;}}return null;}
+function updTitle(id,val){const s=findSec(id);if(!s)return;s.title=val;debouncedSave();renderTree();renderPreview();}
+function updParaTxt(id,val){
+  const s=findSec(id);if(!s)return;
+  s.text=val;S.paraEditCount++;
+  const wc=val.trim().split(/\s+/).filter(Boolean).length;
+  const el=document.getElementById('wc-'+id);if(el)el.textContent=wc+' kata';
+  showAS(id);debouncedSave();renderTree();updateStats();
+  // live update preview
+  const pvb=document.getElementById('pvb-'+id);
+  if(!pvb)renderPreview();
+}
+function updParaLabel(id,label){const s=findSec(id);if(s){s.label=label;save();}}
+
+// ══════════════════════════════
+//  SAVE
+// ══════════════════════════════
+let _st;
+function debouncedSave(){clearTimeout(_st);_st=setTimeout(save,1200);}
+function save(){localStorage.setItem('skripsi_v2',JSON.stringify(S.sections));}
+function showAS(paraId){
+  const el=document.getElementById('save-'+paraId);if(el){el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000);}
+  const g=document.getElementById('global-autosave');if(g){g.classList.add('show');setTimeout(()=>g.classList.remove('show'),2000);}
+}
+function scrollTo(id){
+  const el=document.getElementById('sec-'+id)||document.getElementById('pvb-'+id);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-// ── LITERATURE ─────────────────────────────────────────────
-function getLiterature(sessionId) {
-  const sheet = getOrCreateSheet(SHEET_NAMES.LITERATURE,
-    ['id', 'sessionId', 'title', 'authors', 'year', 'journal', 'url', 'summary', 'createdAt']);
-
-  const rows = sheet.getDataRange().getValues();
-  const headers = rows[0];
-  const data = rows.slice(1)
-    .filter(r => r[1] === sessionId || sessionId === 'all')
-    .map(r => Object.fromEntries(headers.map((h, i) => [h, r[i]])));
-  return { ok: true, data };
+// ══════════════════════════════
+//  AI CORE
+// ══════════════════════════════
+async function callAI(prompt,thinkingText){
+  showThinking(thinkingText||'AI sedang menganalisis...');
+  S.aiCallCount++;updateStats();
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();hideThinking();
+    return(data.content||[]).map(b=>b.text||'').join('')||'';
+  }catch(e){hideThinking();return'';}
 }
 
-function saveLiterature(body) {
-  const sheet = getOrCreateSheet(SHEET_NAMES.LITERATURE,
-    ['id', 'sessionId', 'title', 'authors', 'year', 'journal', 'url', 'summary', 'createdAt']);
-
-  const { id, sessionId, title, authors, year, journal, url, summary } = body;
-  const rows = sheet.getDataRange().getValues();
-
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] === id) {
-      sheet.getRange(i + 1, 1, 1, 9).setValues([[
-        id, sessionId, title, authors || '', year || '', journal || '', url || '', summary || '', rows[i][8]
-      ]]);
-      return { ok: true, updated: true };
-    }
-  }
-  sheet.appendRow([id, sessionId, title, authors || '', year || '', journal || '', url || '', summary || '', timestamp()]);
-  return { ok: true, created: true };
+async function pecahDenganAI(){
+  const txt=document.getElementById('paste-input').value.trim();
+  if(!txt){showToast('Tempel teks terlebih dahulu!');return;}
+  const result=await callAI(`Pecah teks berikut menjadi paragraf-paragraf terpisah yang koheren untuk skripsi.\nKembalikan HANYA JSON array:\n[{"text":"isi paragraf","label":"label fungsi (Konteks & Fenomena/Das Sein/Das Sollen/Urgensi/Kajian Teori/Metodologi/Analisis/Kesimpulan)","saran":"satu kalimat saran"}]\n\nTeks:\n${txt}`,'AI memecah teks menjadi paragraf...');
+  if(!result)return;
+  try{
+    const paras=JSON.parse(result.replace(/```json|```/g,'').trim());
+    let sub=null;
+    const lb=S.sections[S.sections.length-1];
+    if(lb&&lb.children?.length)sub=lb.children[lb.children.length-1];
+    else if(lb){const id='sb'+Date.now();const ns={id,type:'subbab',title:'Sub-Bab Baru',aiData:mkAiData(),children:[]};lb.children=lb.children||[];lb.children.push(ns);sub=ns;}
+    if(sub){paras.forEach((p,i)=>sub.children.push({id:'p'+Date.now()+i,type:'para',text:p.text,label:p.label||'Konteks & Fenomena',aiRecoShown:false,recoContent:`<p class="ai-reco-text">${p.saran||''}</p>`}));document.getElementById('paste-input').value='';save();render();showToast(`✓ ${paras.length} paragraf dibuat AI!`);}
+  }catch(e){showToast('Format AI tidak terbaca. Coba lagi.');}
 }
 
-function deleteLiterature(body) {
-  const sheet = getOrCreateSheet(SHEET_NAMES.LITERATURE,
-    ['id', 'sessionId', 'title', 'authors', 'year', 'journal', 'url', 'summary', 'createdAt']);
-  const rows = sheet.getDataRange().getValues();
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] === body.id) {
-      sheet.deleteRow(i + 1);
-      return { ok: true };
-    }
-  }
-  return { ok: false, error: 'Not found' };
+async function aiAct(paraId,action){
+  const para=findSec(paraId);if(!para||(para.text||'').trim().length<5){showToast('Isi paragraf terlebih dahulu!');return;}
+  const acts={parafrase:'Parafrase paragraf berikut menjadi bahasa akademis Indonesia yang lebih formal. Kembalikan HANYA teks hasil parafrase.',kembangkan:'Kembangkan paragraf berikut menjadi lebih lengkap. Kembalikan HANYA teks yang dikembangkan.',perbaiki:'Perbaiki tata bahasa paragraf berikut sesuai kaidah bahasa Indonesia akademis. Kembalikan HANYA teks yang sudah diperbaiki.'};
+  const result=await callAI(`${acts[action]}\n\nParagraf:\n${para.text}`,`AI sedang ${action} paragraf...`);
+  if(!result)return;para.text=result.trim();save();render();
+  setTimeout(()=>{const ta=document.getElementById('ta-'+paraId);if(ta)ta.value=para.text;},50);
+  showToast(`✓ Paragraf berhasil di-${action}!`);
 }
 
-// ── PROGRESS ───────────────────────────────────────────────
-function getProgress(sessionId) {
-  const sheet = getOrCreateSheet(SHEET_NAMES.PROGRESS,
-    ['sessionId', 'bab1', 'bab2', 'bab3', 'bab4', 'bab5', 'updatedAt']);
+async function getRecoNext(paraId){
+  const para=findSec(paraId);if(!para)return;
+  const result=await callAI(`Berdasarkan paragraf ini (label: ${para.label}), berikan rekomendasi konten paragraf selanjutnya dan 3 referensi jurnal.\n\nFormat dalam HTML PERSIS ini:\n<p class="ai-reco-text"><strong>Saran paragraf selanjutnya:</strong> [saran 2-3 kalimat]</p>\n<div class="ref-list">\n  <div class="ref-item"><div class="ref-item-header"><div class="ref-title">[Judul jurnal]</div><div class="ref-meta">[Penulis] · [Tahun] · [Jurnal]</div></div><div class="ref-summary show">[Ringkasan relevansinya]</div><div class="ref-links"><a class="ref-link" href="https://scholar.google.com/scholar?q=[judul]" target="_blank">🔍 Scholar</a><a class="ref-link dl" href="https://sci-hub.se" target="_blank">⬇ Sci-Hub</a></div></div>\n</div>\n\nKembalikan HANYA HTML tersebut.\n\nParagraf:\n${para.text}`,'Menyusun rekomendasi dan referensi...');
+  if(!result)return;
+  para.recoContent=result;para.aiRecoShown=true;
+  const box=document.getElementById('reco-'+paraId);const content=document.getElementById('reco-c-'+paraId);
+  if(box)box.classList.add('show');if(content)content.innerHTML=result;
+  save();showToast('✓ Rekomendasi dan referensi siap!');
+}
+function hideReco(paraId){const p=findSec(paraId);if(p){p.aiRecoShown=false;save();}document.getElementById('reco-'+paraId)?.classList.remove('show');}
 
-  const rows = sheet.getDataRange().getValues();
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] === sessionId) {
-      return { ok: true, data: {
-        bab1: rows[i][1], bab2: rows[i][2], bab3: rows[i][3],
-        bab4: rows[i][4], bab5: rows[i][5]
-      }};
-    }
-  }
-  return { ok: true, data: { bab1: 0, bab2: 0, bab3: 0, bab4: 0, bab5: 0 } };
+async function sendCopilot(){
+  const q=document.getElementById('copilot-q').value.trim();if(!q)return;
+  const result=await callAI(`Pertanyaan mahasiswa skripsi: ${q}\n\nJawab singkat, praktis, bahasa Indonesia akademis:`,'Copilot berpikir...');
+  if(!result)return;
+  const el=document.getElementById('rp-copilot');
+  const box=document.createElement('div');box.className='cop-box';
+  box.innerHTML=`<div class="cop-label">✦ Jawaban Copilot</div><div class="cop-text">${result.replace(/\n/g,'<br>')}</div>`;
+  el.insertBefore(box,el.lastElementChild);
+  document.getElementById('copilot-q').value='';showToast('✓ Copilot menjawab!');
 }
 
-function saveProgress(body) {
-  const sheet = getOrCreateSheet(SHEET_NAMES.PROGRESS,
-    ['sessionId', 'bab1', 'bab2', 'bab3', 'bab4', 'bab5', 'updatedAt']);
+// ══════════════════════════════
+//  CITATIONS
+// ══════════════════════════════
+function fmtCite(lit,fmt){
+  if(fmt==='apa')return`${lit.authors} (${lit.year}). ${lit.title}. <em>${lit.journal}</em>, <em>${lit.volume||''}</em>, ${lit.pages||''}. https://doi.org/${lit.doi||''}`;
+  if(fmt==='ieee')return`${lit.authors}, "${lit.title}," <em>${lit.journal}</em>, vol. ${(lit.volume||'').split('(')[0]}, pp. ${lit.pages||''}, ${lit.year}.`;
+  return`${lit.authors}. "${lit.title}." <em>${lit.journal}</em> ${lit.volume||''} (${lit.year}): ${lit.pages||''}.`;
+}
+function renderCitations(){
+  const list=document.getElementById('cite-list');if(!list)return;list.innerHTML='';
+  S.literature.forEach(lit=>{
+    const el=document.createElement('div');el.className='cite-card';
+    el.innerHTML=`<div class="cite-top"><div class="cite-title">${lit.title}</div><div class="cite-meta">${lit.authors} · ${lit.year}</div></div>
+      <div class="cite-fmt">${fmtCite(lit,S.citeFormat)}</div>
+      <div class="cite-actions">
+        <button class="cite-btn" onclick="copyCite('${lit.id}')">📋 Salin</button>
+        <a class="cite-btn" href="${lit.url}" target="_blank">🔗 Buka</a>
+        <button class="cite-btn" onclick="toggleSum('${lit.id}')">📖 Ringkasan</button>
+      </div>
+      <div class="ref-summary" id="sum-${lit.id}">${lit.summary}</div>`;
+    list.appendChild(el);
+  });
+}
+function selFmt(fmt,btn){S.citeFormat=fmt;document.querySelectorAll('.cite-fmt-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCitations();}
+function copyCite(litId){const l=S.literature.find(x=>x.id===litId);if(!l)return;navigator.clipboard.writeText(fmtCite(l,S.citeFormat).replace(/<[^>]+>/g,'')).then(()=>showToast('Sitasi disalin!'));}
+function toggleSum(litId){document.getElementById('sum-'+litId)?.classList.toggle('show');}
+function genAllCites(){let t=`DAFTAR PUSTAKA (${S.citeFormat.toUpperCase()})\n\n`;S.literature.forEach(l=>t+=fmtCite(l,S.citeFormat).replace(/<[^>]+>/g,'')+'\n\n');navigator.clipboard.writeText(t.trim()).then(()=>showToast('Semua sitasi disalin!'));}
 
-  const { sessionId, bab1, bab2, bab3, bab4, bab5 } = body;
-  const rows = sheet.getDataRange().getValues();
-
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] === sessionId) {
-      sheet.getRange(i + 1, 1, 1, 7).setValues([[
-        sessionId, bab1||0, bab2||0, bab3||0, bab4||0, bab5||0, timestamp()
-      ]]);
-      return { ok: true, updated: true };
-    }
-  }
-  sheet.appendRow([sessionId, bab1||0, bab2||0, bab3||0, bab4||0, bab5||0, timestamp()]);
-  return { ok: true, created: true };
+// ══════════════════════════════
+//  EXPORT
+// ══════════════════════════════
+function copyFullText(){let t='';S.sections.forEach(bab=>{t+=bab.title+'\n\n';(bab.children||[]).forEach(sub=>{t+=sub.title+'\n\n';(sub.children||[]).forEach(p=>{if(p.text)t+=p.text+'\n\n';});});});navigator.clipboard.writeText(t.trim()).then(()=>showToast('Teks disalin!'));}
+function exportPDF(){
+  let body='';
+  S.sections.forEach(bab=>{
+    body+=`<h2 style="font-size:16pt;margin:24pt 0 8pt;font-family:'Times New Roman',serif">${bab.title}</h2>`;
+    (bab.children||[]).forEach(sub=>{
+      body+=`<h3 style="font-size:14pt;margin:16pt 0 6pt;font-style:italic;font-family:'Times New Roman',serif">${sub.title}</h3>`;
+      (sub.children||[]).forEach(p=>{if(p.text)body+=`<p style="font-size:12pt;line-height:2;text-align:justify;margin:0 0 12pt;font-family:'Times New Roman',serif;text-indent:1.25cm">${p.text}</p>`;});
+    });
+  });
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>SkripsiAI Export</title><style>@page{margin:3cm 3cm 3cm 4cm}body{font-family:'Times New Roman',serif}@media print{button{display:none}}</style></head><body><button onclick="window.print()" style="padding:8px 20px;margin-bottom:20px;cursor:pointer;font-size:14px">🖨 Cetak / Simpan PDF</button>${body}</body></html>`);
+  w.document.close();showToast('Halaman export dibuka di tab baru');
 }
 
-// ── AI LOG ─────────────────────────────────────────────────
-function logAI(body) {
-  const sheet = getOrCreateSheet(SHEET_NAMES.LOGS,
-    ['sessionId', 'toolName', 'inputLength', 'outputLength', 'model', 'tokensUsed', 'createdAt']);
-
-  sheet.appendRow([
-    body.sessionId || 'unknown',
-    body.toolName || '',
-    body.inputLength || 0,
-    body.outputLength || 0,
-    body.model || 'claude-sonnet-4-20250514',
-    body.tokensUsed || 0,
-    timestamp()
-  ]);
-  return { ok: true };
+// ══════════════════════════════
+//  STATS
+// ══════════════════════════════
+function updateStats(){
+  let words=0,babs=0;
+  S.sections.forEach(bab=>{babs++;(bab.children||[]).forEach(sub=>(sub.children||[]).forEach(p=>words+=(p.text||'').trim().split(/\s+/).filter(Boolean).length));});
+  const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  sv('stat-para',S.paraEditCount);sv('stat-words',words);sv('stat-ai',S.aiCallCount);sv('stat-bab',babs);
+  const prog=document.getElementById('bab-prog-list');if(!prog)return;prog.innerHTML='';
+  S.sections.forEach(bab=>{
+    let total=0,filled=0;
+    (bab.children||[]).forEach(sub=>(sub.children||[]).forEach(p=>{total++;if((p.text||'').trim().length>20)filled++;}));
+    const pct=total?Math.round((filled/total)*100):0;
+    prog.innerHTML+=`<div class="bab-prog"><div class="bab-prog-hd"><span>${bab.title.substring(0,22)}</span><span>${pct}%</span></div><div class="bab-prog-bar"><div class="bab-prog-fill" style="width:${pct}%"></div></div></div>`;
+  });
 }
 
-// ── SESSION ────────────────────────────────────────────────
-function saveSession(body) {
-  const sheet = getOrCreateSheet(SHEET_NAMES.SESSIONS,
-    ['sessionId', 'userName', 'major', 'thesisTitle', 'targetDate', 'createdAt', 'updatedAt']);
-
-  const { sessionId, userName, major, thesisTitle, targetDate } = body;
-  const rows = sheet.getDataRange().getValues();
-
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] === sessionId) {
-      sheet.getRange(i + 1, 1, 1, 7).setValues([[
-        sessionId, userName||'', major||'', thesisTitle||'', targetDate||'', rows[i][5], timestamp()
-      ]]);
-      return { ok: true, updated: true };
-    }
-  }
-  sheet.appendRow([sessionId, userName||'', major||'', thesisTitle||'', targetDate||'', timestamp(), timestamp()]);
-  return { ok: true, created: true };
+// ══════════════════════════════
+//  POMODORO
+// ══════════════════════════════
+function togglePom(){
+  const btn=document.getElementById('pom-start-btn'),dot=document.getElementById('pom-dot');
+  if(S.pomRunning){clearInterval(S.pomInterval);S.pomRunning=false;btn.textContent='Mulai';btn.classList.remove('running');dot.classList.remove('running');}
+  else{S.pomRunning=true;btn.textContent='Jeda';btn.classList.add('running');dot.classList.add('running');S.pomInterval=setInterval(()=>{S.pomSec--;if(S.pomSec<=0){resetPom();showToast('🍅 Pomodoro selesai!');}updPomDisp();},1000);}
 }
+function resetPom(){clearInterval(S.pomInterval);S.pomRunning=false;S.pomSec=25*60;updPomDisp();const btn=document.getElementById('pom-start-btn'),dot=document.getElementById('pom-dot');if(btn){btn.textContent='Mulai';btn.classList.remove('running');}if(dot)dot.classList.remove('running');}
+function updPomDisp(){const m=Math.floor(S.pomSec/60),s=S.pomSec%60;const el=document.getElementById('pom-display');if(el)el.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+
+// ══════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════
+function switchMain(tab){
+  document.querySelectorAll('.main-tab').forEach((t,i)=>t.classList.toggle('active',['editor','preview'][i]===tab));
+  document.getElementById('tab-editor').classList.toggle('hidden',tab!=='editor');
+  document.getElementById('tab-preview').classList.toggle('hidden',tab!=='preview');
+  if(tab==='preview')renderPreview();
+}
+function switchRp(tab,btn){
+  document.querySelectorAll('.rp-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');
+  ['rp-copilot','rp-sitasi','rp-progress'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('rp-'+tab).classList.remove('hidden');
+  if(tab==='progress')updateStats();if(tab==='sitasi')renderCitations();
+}
+function showThinking(text){document.getElementById('ai-thinking').classList.add('show');document.getElementById('ai-thinking-text').textContent=text;}
+function hideThinking(){document.getElementById('ai-thinking').classList.remove('show');}
+let _tt;function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),3200);}
+function xe(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+init();
+</script>
+</body>
+</html>
