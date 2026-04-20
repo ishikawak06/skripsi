@@ -135,13 +135,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 /* A4 Paper Preview & Print */
 .a4-wrapper { background: #e0e0e0; padding: 20px; overflow-y: auto; display: flex; justify-content: center; max-height: calc(100vh - 100px); border-radius: 8px; border: 1px solid var(--border); }
-.a4-paper { background: white; width: 21cm; min-height: 29.7cm; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 4cm 3cm 3cm 4cm; font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: black; line-height: 1.5; margin-bottom: 20px; position: relative; }
+.a4-paper { background: white; width: 21cm; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 4cm 3cm 3cm 4cm; font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: black; line-height: 1.5; position: relative; }
 .a4-paper.spacing-2 { line-height: 2; }
-.a4-paper h1 { font-size: 14pt; text-align: center; text-transform: uppercase; margin-bottom: 20px; page-break-before: always; font-weight: bold;}
-.a4-paper h1:first-child { page-break-before: avoid; }
+.a4-paper h1 { font-size: 14pt; text-align: center; text-transform: uppercase; margin-bottom: 20px; font-weight: bold;}
 .a4-paper h2 { font-size: 12pt; font-weight: bold; margin-top: 16px; margin-bottom: 8px; }
 .a4-paper p, .a4-paper div { text-align: justify; }
-.a4-cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 100%; min-height: 21cm;}
+.a4-cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 20cm; margin-bottom: 2cm;}
 .a4-cover .c-title { font-size: 14pt; font-weight: bold; text-transform: uppercase; margin-bottom: 2cm; }
 .a4-cover .c-logo { width: 4cm; height: 4cm; margin-bottom: 2cm; border: 1px dashed #ccc; display:flex; align-items:center; justify-content:center; color:#999; border-radius:50%; }
 .a4-cover .c-author { font-size: 12pt; font-weight: bold; text-transform: uppercase; margin-bottom: 0.5cm; }
@@ -149,16 +148,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .a4-cover .c-univ { font-size: 14pt; font-weight: bold; text-transform: uppercase; line-height: 1.5; }
 
 .toc-title { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 20px; }
-.toc-item { display: flex; justify-content: space-between; margin-bottom: 8px; }
-.toc-item .dots { flex: 1; border-bottom: 1px dotted black; margin: 0 10px; position: relative; top: -4px; }
+.toc-item { display: flex; align-items: baseline; margin-bottom: 8px; }
+.toc-item .dots { flex-grow: 1; border-bottom: 1px dotted black; margin: 0 10px; }
 .toc-bab { font-weight: bold; margin-top: 12px; }
+
+/* Visual Page Break for Web Preview */
+.print-page-break { border-top: 2px dashed #bbb; margin: 40px -3cm 40px -4cm; padding-top: 40px; position: relative; text-align: center;}
+.print-page-break::before { content: "--- Batas Halaman ---"; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: white; padding: 0 10px; color: #999; font-size: 10px; font-family: 'DM Sans', sans-serif; font-weight: 600; letter-spacing: 0.05em;}
 
 @media print {
   body * { visibility: hidden; }
   #print-area, #print-area * { visibility: visible; }
   #print-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; background: white; overflow: visible;}
-  .a4-paper { box-shadow: none; margin: 0; border: none; padding: 4cm 3cm 3cm 4cm; width: 21cm; min-height: 29.7cm; }
+  .a4-paper { box-shadow: none; margin: 0; border: none; padding: 4cm 3cm 3cm 4cm; width: 21cm; }
   .a4-wrapper { padding: 0; background: transparent; overflow: visible; display: block; border:none; max-height: none;}
+  .print-page-break { border: none; margin: 0; padding: 0; page-break-before: always; }
+  .print-page-break::before { display: none; }
   @page { size: A4 portrait; margin: 0; }
 }
 
@@ -198,10 +203,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cite-actions{display:flex;gap:4px;padding:5px 10px;border-top:1px solid var(--border)}
 .cite-btn{font-size:11px;padding:3px 9px;border:1px solid var(--border);border-radius:5px;background:none;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center}
 .cite-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
-.stat-card{padding:8px 10px;background:var(--surface2);border-radius:var(--radius)}
-.stat-lbl{font-size:10px;color:var(--text3);margin-bottom:2px}
-.stat-val{font-size:20px;font-weight:500;color:var(--text)}
 
 /* Settings & Forms */
 .settings-input {width: 100%; height: 32px; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; margin-top: 4px; background: var(--bg); color: var(--text); transition: all .15s;}
@@ -256,20 +257,6 @@ canvas#doc-canvas {background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); ma
 ::-webkit-scrollbar-thumb{background:#C8C2B8;border-radius:10px}
 ::-webkit-scrollbar-thumb:hover{background:#9E9890;}
 </style>
-<!-- Service Worker Inline Setup (PWA Mode) -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      const swCode = `
-        const CACHE_NAME = 'skripsiai-cache-v1';
-        self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['/']))); });
-        self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(res => res || fetch(e.request).catch(() => console.log('Aset tidak ada di cache offline:', e.request.url)))); });
-      `;
-      const blob = new Blob([swCode], {type: 'application/javascript'});
-      navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(err => {});
-    });
-  }
-</script>
 </head>
 <body>
 <div class="app-shell">
@@ -532,7 +519,7 @@ canvas#doc-canvas {background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); ma
     <div class="modal-footer" style="flex-direction: column; gap: 8px;">
       <button class="btn btn-accent" style="width: 100%; padding:10px; font-weight:600;" onclick="doPrint()">🖨 Print / Simpan sebagai PDF (Sangat Disarankan)</button>
       <button class="btn" style="width: 100%; padding:10px;" onclick="doExportPDF()">⬇ Download via html2pdf</button>
-      <div style="font-size:10px; color:var(--text3); text-align:center;">Gunakan opsi Print untuk pemotongan halaman otomatis yang lebih rapi dan bersih.</div>
+      <div style="font-size:10px; color:var(--text3); text-align:center;">Gunakan opsi Print untuk mendapatkan layout "Full Text" utuh karena fitur html2pdf terbatas pada file ukuran panjang.</div>
     </div>
   </div>
 </div>
@@ -569,7 +556,7 @@ canvas#doc-canvas {background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); ma
   <div class="modal-content">
     <div class="modal-header"><div class="modal-title">Cari Jurnal via AI</div><button class="close-btn" onclick="closeAISearch()">✕</button></div>
     <div class="modal-body" style="display:flex; flex-direction:column; gap:10px;">
-      <p style="font-size:12px; color:var(--text2); margin-bottom:4px;">AI akan mencarikan jurnal berdasarkan teks yang Anda blok:</p>
+      <p style="font-size:12px; color:var(--text2); margin-bottom:4px;">AI akan mencarikan jurnal berdasarkan teks yang Anda blok. <strong>Sitasi bernomor otomatis (Footnote)</strong> akan disisipkan langsung ke editor Anda.</p>
       <div id="ai-search-topic-display" style="font-style:italic; padding:8px; border-left:3px solid var(--accent); background:var(--surface2); border-radius:4px; font-size:12px;"></div>
       
       <div class="form-row" style="margin-bottom:0;">
@@ -666,7 +653,7 @@ function initDB(callback) {
 function saveFileToDB(id, data, meta, callback) {
   if(!idb) return; 
   const tx = idb.transaction("files", "readwrite");
-  tx.objectStore("files").put({id: id, data: data, name: meta.name, type: meta.type}); 
+  tx.objectStore("files").put({id: id, data: data, name: meta.name, type: meta.type, annotations: meta.annotations || {}}); 
   tx.oncomplete = () => { if(callback) callback(); };
 }
 
@@ -753,7 +740,7 @@ function defaultSections(){
       id:'s2',
       type:'subbab',
       title:'1.1 Latar Belakang',
-      text:'Perkembangan teknologi...',
+      text:'',
       attachments:[],
       aiData:mkAiData()
     }]
@@ -1057,18 +1044,23 @@ function applyContinue() {
     showToast('✓ Lanjutan teks diterapkan!');
 }
 
-// REFERENSI PENCARIAN AI
-let activeSearchContext = { subId: null, text: '' };
+// REFERENSI PENCARIAN AI & INLINE CITATION FOOTNOTE
+let activeSearchContext = { subId: null, text: '', range: null };
 
 function searchAIByHighlight(subId) {
-  const selection = window.getSelection().toString();
-  if (!selection.trim()) { 
+  const sel = window.getSelection();
+  if (!sel.toString().trim()) { 
     showToast('Blok (sorot) teks di editor terlebih dahulu untuk mencari jurnal terkait!'); 
     return; 
   }
   
-  activeSearchContext = { subId: subId, text: selection };
-  document.getElementById('ai-search-topic-display').textContent = selection; 
+  // Clone range sebelum focus hilang
+  activeSearchContext = { subId: subId, text: sel.toString(), range: null };
+  if (sel.rangeCount > 0) {
+    activeSearchContext.range = sel.getRangeAt(0).cloneRange();
+  }
+
+  document.getElementById('ai-search-topic-display').textContent = sel.toString(); 
   document.getElementById('ai-search-results').innerHTML = '';
   document.getElementById('ai-search-modal').classList.add('show');
 }
@@ -1136,19 +1128,55 @@ function addAIRefToSubbab(payloadEnc, btn, subId) {
     doi: '', 
     summary: item.summary 
   }); 
-  
+
+  const refNumber = S.literature.length; // Penomoran urut untuk Footnote
+
+  const editor = document.getElementById('ta-' + subId);
+  const s = findSec(subId);
+
+  // Menambahkan inline citation (nomor footnote) ke dalam editor tepat di kalimat yang disorot
+  if (activeSearchContext.range && editor && s) {
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(activeSearchContext.range);
+
+    const citeNode = document.createElement('sup');
+    citeNode.innerHTML = `&nbsp;<a href="#ref-${refNumber}" style="color:var(--blue); text-decoration:none; font-weight:bold;">[${refNumber}]</a>`;
+    
+    activeSearchContext.range.collapse(false); // Memindahkan posisi ke akhir teks yang disorot
+    activeSearchContext.range.insertNode(citeNode);
+
+    // Menggeser kursor ke sesudah elemen yang disisipkan
+    activeSearchContext.range.setStartAfter(citeNode);
+    activeSearchContext.range.setEndAfter(citeNode);
+    sel.removeAllRanges();
+    sel.addRange(activeSearchContext.range);
+
+    s.text = editor.innerHTML;
+  } else if (s) {
+    // Fallback jika tidak menemukan posisi seleksi
+    s.text += ` <sup>&nbsp;<a href="#ref-${refNumber}" style="color:var(--blue); text-decoration:none; font-weight:bold;">[${refNumber}]</a></sup>`;
+    if(editor) editor.innerHTML = s.text;
+  }
+
+  save();
   renderCitations();
   
   const fileId = 'f_' + Date.now(); 
   const meta = {name: item.title, type: 'link'};
   
   saveFileToDB(fileId, decodeURIComponent(payloadEnc), meta, () => {
-     attachFileToSubbab(subId, {id: fileId, name: item.title + (item.pages ? ` (${item.pages})` : ''), type: 'link'});
+     // Lampirkan juga ke daftar attachments sub-bab
+     s.attachments = s.attachments || [];
+     s.attachments.push({id: fileId, name: item.title + (item.pages ? ` (${item.pages})` : ''), type: 'link'});
+     
      btn.textContent = '✓ Tersimpan'; 
      btn.disabled = true; 
      btn.style.background = 'var(--surface2)'; 
      btn.style.color = 'var(--text3)'; 
      btn.style.borderColor = 'var(--border)';
+
+     renderPustaka();
   });
 }
 
@@ -1247,7 +1275,7 @@ function deleteAttachment(subId, fileId) {
   renderPustaka();
 }
 
-let viewerState = { pdfDoc: null, pageNum: 1, canvas: null, ctx: null, isDrawing: false, highlighterOn: false, fileMeta: null };
+let viewerState = { pdfDoc: null, pageNum: 1, canvas: null, ctx: null, isDrawing: false, highlighterOn: false, fileMeta: null, annotations: {}, currentStroke: [] };
 
 function initViewerCanvas() {
   viewerState.canvas = document.getElementById('doc-canvas'); 
@@ -1264,8 +1292,10 @@ function initViewerCanvas() {
   viewerState.canvas.onmousedown = (e) => { 
     if(!viewerState.highlighterOn) return; 
     viewerState.isDrawing = true; 
+    const pos = getMousePos(e);
+    viewerState.currentStroke = [pos];
     viewerState.ctx.beginPath(); 
-    viewerState.ctx.moveTo(getMousePos(e).x, getMousePos(e).y); 
+    viewerState.ctx.moveTo(pos.x, pos.y); 
     viewerState.ctx.lineWidth = 20; 
     viewerState.ctx.lineCap = 'round'; 
     viewerState.ctx.lineJoin = 'round'; 
@@ -1275,18 +1305,53 @@ function initViewerCanvas() {
   
   viewerState.canvas.onmousemove = (e) => { 
     if(!viewerState.isDrawing || !viewerState.highlighterOn) return; 
-    viewerState.ctx.lineTo(getMousePos(e).x, getMousePos(e).y); 
+    const pos = getMousePos(e);
+    viewerState.currentStroke.push(pos);
+    viewerState.ctx.lineTo(pos.x, pos.y); 
     viewerState.ctx.stroke(); 
   };
   
   viewerState.canvas.onmouseup = () => { 
+    if(!viewerState.isDrawing) return;
     viewerState.isDrawing = false; 
     viewerState.ctx.closePath(); 
+    if(viewerState.currentStroke.length > 0) {
+        if(!viewerState.annotations[viewerState.pageNum]) viewerState.annotations[viewerState.pageNum] = [];
+        viewerState.annotations[viewerState.pageNum].push(viewerState.currentStroke);
+        saveAnnotations();
+    }
   }; 
   
   viewerState.canvas.onmouseout = () => { 
-    viewerState.isDrawing = false; 
+    if(viewerState.isDrawing) viewerState.canvas.onmouseup();
   };
+}
+
+function saveAnnotations() {
+    if(!viewerState.fileMeta) return;
+    viewerState.fileMeta.annotations = viewerState.annotations;
+    saveFileToDB(viewerState.fileMeta.id, viewerState.fileMeta.data, viewerState.fileMeta, null);
+}
+
+function drawAnnotations(pageNum) {
+    if(!viewerState.annotations || !viewerState.annotations[pageNum]) return;
+    const strokes = viewerState.annotations[pageNum];
+    strokes.forEach(stroke => {
+        if (stroke.length === 0) return;
+        viewerState.ctx.beginPath();
+        viewerState.ctx.moveTo(stroke[0].x, stroke[0].y);
+        viewerState.ctx.lineWidth = 20;
+        viewerState.ctx.lineCap = 'round';
+        viewerState.ctx.lineJoin = 'round';
+        viewerState.ctx.strokeStyle = 'rgba(255, 235, 59, 0.5)';
+        viewerState.ctx.globalCompositeOperation = 'multiply';
+        for (let i = 1; i < stroke.length; i++) {
+            viewerState.ctx.lineTo(stroke[i].x, stroke[i].y);
+        }
+        viewerState.ctx.stroke();
+        viewerState.ctx.closePath();
+    });
+    viewerState.ctx.globalCompositeOperation = 'source-over';
 }
 
 function toggleHighlighter() {
@@ -1305,6 +1370,11 @@ function toggleHighlighter() {
 }
 
 function clearCanvasDrawings() { 
+  if(!confirm('Hapus semua coretan di halaman ini?')) return;
+  if (viewerState.annotations && viewerState.annotations[viewerState.pageNum]) {
+      viewerState.annotations[viewerState.pageNum] = [];
+      saveAnnotations();
+  }
   if(viewerState.pdfDoc) {
     renderPdfPage(viewerState.pageNum); 
   } else if(viewerState.fileMeta && viewerState.fileMeta.type !== 'pdf' && viewerState.fileMeta.type !== 'link') {
@@ -1344,6 +1414,7 @@ async function openViewer(fileId) {
     }
     
     viewerState.fileMeta = fileObj; 
+    viewerState.annotations = fileObj.annotations || {};
     document.getElementById('viewer-title').textContent = fileObj.name; 
     document.getElementById('viewer-modal').classList.add('show');
     
@@ -1394,6 +1465,7 @@ async function openViewer(fileId) {
        } else { 
          pagination.style.display = 'none'; 
          viewerState.pdfDoc = null; 
+         viewerState.pageNum = 1;
          
          const img = new Image(); 
          img.onload = () => { 
@@ -1402,6 +1474,7 @@ async function openViewer(fileId) {
            viewerState.ctx.globalCompositeOperation = 'source-over'; 
            viewerState.ctx.clearRect(0, 0, img.width, img.height); 
            viewerState.ctx.drawImage(img, 0, 0); 
+           drawAnnotations(1);
          }; 
          img.src = fileObj.data; 
        }
@@ -1419,6 +1492,7 @@ function renderPdfPage(num) {
     page.render({canvasContext: viewerState.ctx, viewport: viewport}).promise.then(() => { 
       hideThinking(); 
       document.getElementById('page-num').textContent = num; 
+      drawAnnotations(num);
     }); 
   }); 
 }
@@ -1691,7 +1765,7 @@ function renderSubbab(sub){
     <div class="para-ai-bar">
       <button class="para-ai-btn" onclick="saveSubManual('${sub.id}')">💾 Simpan</button>
       <button class="para-ai-btn" style="border-color:var(--blue); color:var(--blue); background:var(--blue-light)" onclick="triggerUpload('${sub.id}')">📎 Upload Referensi</button>
-      <button class="para-ai-btn" style="border-color:var(--gold); color:var(--gold); background:var(--gold-light)" onclick="searchAIByHighlight('${sub.id}')">🔍 Cari Jurnal via AI</button>
+      <button class="para-ai-btn" style="border-color:var(--gold); color:var(--gold); background:var(--gold-light)" onmousedown="event.preventDefault(); searchAIByHighlight('${sub.id}')">🔍 Cari Jurnal via AI</button>
       <button class="para-ai-btn" onclick="openParaphraseModal('${sub.id}')">🔄 Parafrase Canggih</button>
       <button class="para-ai-btn ai-next" onclick="openContinueModal('${sub.id}')">✦ Auto Lanjutkan Teks</button>
     </div>
@@ -1731,7 +1805,7 @@ function renderPreview() {
     return;
   }
 
-  // Bungkus dalam A4 Wrapper untuk preview web & print mode
+  // A4 Wrapper
   wrap.innerHTML = `<div id="print-area" class="a4-wrapper"><div class="a4-paper ${spacingClass}" id="a4-content"></div></div>`;
   const content = document.getElementById('a4-content');
 
@@ -1755,7 +1829,7 @@ function renderPreview() {
       <div style="flex:1"></div>
       <div class="c-univ">${pUniv}<br><br>${pYear}</div>
     </div>
-    <div style="page-break-before: always;"></div>
+    <div class="print-page-break"></div>
   `;
 
   // Daftar Isi
@@ -1766,10 +1840,11 @@ function renderPreview() {
       html += `<div class="toc-item" style="padding-left: 1.5cm;"><span>${xe(sub.title)}</span><div class="dots"></div><span></span></div>`;
     });
   });
-  html += `<div style="page-break-before: always;"></div>`;
+  html += `<div class="print-page-break"></div>`;
 
   // Isi Skripsi (Bab & Subbab)
-  S.sections.forEach(bab => { 
+  S.sections.forEach((bab, idx) => { 
+    if (idx > 0) html += `<div class="print-page-break"></div>`;
     html += `<h1>${xe(bab.title)}</h1>`;
     (bab.children || []).forEach(sub => {
       html += `<h2>${xe(sub.title)}</h2>`;
@@ -1781,11 +1856,14 @@ function renderPreview() {
     });
   });
 
-  // Daftar Pustaka
+  // Daftar Pustaka (Bibliography Numbered Based on References Added)
   if (S.literature && S.literature.length > 0) {
-     html += `<h1 style="page-break-before: always;">DAFTAR PUSTAKA</h1>`;
-     S.literature.forEach(lit => {
-        html += `<div style="text-align:justify; text-indent:-1.2cm; padding-left:1.2cm; margin-bottom:12px;">${fmtCite(lit, S.citeFormat)}</div>`;
+     html += `<div class="print-page-break"></div>`;
+     html += `<h1>DAFTAR PUSTAKA</h1>`;
+     S.literature.forEach((lit, idx) => {
+        html += `<div id="ref-${idx+1}" style="text-align:justify; margin-bottom:12px; padding-left: 24px; text-indent: -24px;">
+                    <span style="font-weight:bold; margin-right:6px;">[${idx+1}]</span> ${fmtCite(lit, S.citeFormat)}
+                 </div>`;
      });
   }
 
@@ -1826,7 +1904,6 @@ async function genHafalan(subId){
   if(!result) return; 
   
   try{ 
-    // Fixed: properly escaped regex
     const items=JSON.parse(result.replace(/```json|```/g,'').trim()); 
     sub.aiData.hafalan=sub.aiData.hafalan||[]; 
     items.forEach(item=>sub.aiData.hafalan.push({text:item.text||'',locked:false})); 
@@ -1877,7 +1954,6 @@ async function genPres(subId){
   if(!result) return; 
   
   try{ 
-    // Fixed: properly escaped regex
     const data=JSON.parse(result.replace(/```json|```/g,'').trim()); 
     sub.aiData.presentasi={opening:data.opening||'',isi:data.isi||'',penutup:data.penutup||''}; 
     sub.aiData.presentasiSaved=false;
@@ -2207,6 +2283,9 @@ function selFmt(fmt,btn){
   document.querySelectorAll('.cite-fmt-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderCitations();
+  if(!document.getElementById('tab-preview').classList.contains('hidden')) {
+      renderPreview();
+  }
 }
 
 function copyCite(litId){
