@@ -8,6 +8,8 @@
 <!-- PDF.js for in-app PDF rendering -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script>window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+<!-- html2pdf for PDF Generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{
   --bg:#F7F5F0;--surface:#FFF;--surface2:#F0EDE6;
@@ -127,63 +129,38 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .thesis-title-input{width:100%; resize:none; font-family:'Lora',serif; font-size:18px; line-height:1.4; font-weight:600; color:var(--text); border:none; outline:none; background:transparent}
 .thesis-title-input::placeholder{color:var(--border2); font-weight:400; font-style:italic}
 
-/* Preview */
+/* Preview Toolbar */
 .preview-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .preview-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
-.preview-bab-heading{font-family:'Lora',serif;font-size:16px;font-weight:600;color:var(--text);padding:10px 0 6px;border-bottom:2px solid var(--border);margin-bottom:14px;margin-top:6px}
-.preview-subbab-block{margin-bottom:16px;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow)}
-.preview-subbab-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 18px;background:var(--surface);cursor:pointer;border-bottom:1px solid var(--border)}
-.preview-subbab-header:hover{background:var(--surface2)}
-.preview-subbab-title{font-family:'Lora',serif;font-size:14px;font-weight:600;font-style:italic;color:var(--text)}
-.preview-subbab-chevron{font-size:11px;color:var(--text3);transition:transform .2s}
-.preview-subbab-chevron.closed{transform:rotate(-90deg)}
-.preview-subbab-content{background:var(--surface);padding:16px 24px}
-.preview-para-text{font-family:'Lora',serif;font-size:14px;line-height:1.9;color:var(--text);margin-bottom:10px;text-align:justify;text-indent:1.2em;}
-.preview-para-text ul, .preview-para-text ol{margin-left:24px;}
-.preview-para-placeholder{font-size:13px;color:var(--text3);font-style:italic;border:1.5px dashed var(--border);padding:9px;border-radius:6px;margin-bottom:10px;font-family:'DM Sans',sans-serif}
 
-/* Subbab AI Panel */
-.subbab-ai-panel{border-top:1px solid var(--border);background:var(--bg)}
-.subbab-ai-tabs{display:flex;background:var(--surface2);border-bottom:1px solid var(--border)}
-.subbab-ai-tab{flex:1;padding:9px 6px;font-size:11px;font-weight:500;text-align:center;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);transition:all .15s}
-.subbab-ai-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--surface)}
+/* A4 Paper Preview & Print */
+.a4-wrapper { background: #e0e0e0; padding: 20px; overflow-y: auto; display: flex; justify-content: center; max-height: calc(100vh - 100px); border-radius: 8px; border: 1px solid var(--border); }
+.a4-paper { background: white; width: 21cm; min-height: 29.7cm; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 4cm 3cm 3cm 4cm; font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: black; line-height: 1.5; margin-bottom: 20px; position: relative; }
+.a4-paper.spacing-2 { line-height: 2; }
+.a4-paper h1 { font-size: 14pt; text-align: center; text-transform: uppercase; margin-bottom: 20px; page-break-before: always; font-weight: bold;}
+.a4-paper h1:first-child { page-break-before: avoid; }
+.a4-paper h2 { font-size: 12pt; font-weight: bold; margin-top: 16px; margin-bottom: 8px; }
+.a4-paper p, .a4-paper div { text-align: justify; }
+.a4-cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; height: 100%; min-height: 21cm;}
+.a4-cover .c-title { font-size: 14pt; font-weight: bold; text-transform: uppercase; margin-bottom: 2cm; }
+.a4-cover .c-logo { width: 4cm; height: 4cm; margin-bottom: 2cm; border: 1px dashed #ccc; display:flex; align-items:center; justify-content:center; color:#999; border-radius:50%; }
+.a4-cover .c-author { font-size: 12pt; font-weight: bold; text-transform: uppercase; margin-bottom: 0.5cm; }
+.a4-cover .c-nim { font-size: 12pt; margin-bottom: 2cm; }
+.a4-cover .c-univ { font-size: 14pt; font-weight: bold; text-transform: uppercase; line-height: 1.5; }
 
-/* Panels */
-.ringkasan-body, .hafalan-body, .presentasi-body{padding:14px 16px;background:var(--surface)}
-.section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px}
-.ringkasan-text{font-size:13px;line-height:1.75;color:var(--text);min-height:52px}
-.regen-bar{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.toc-title { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 20px; }
+.toc-item { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.toc-item .dots { flex: 1; border-bottom: 1px dotted black; margin: 0 10px; position: relative; top: -4px; }
+.toc-bab { font-weight: bold; margin-top: 12px; }
 
-/* Hafalan & Presentasi */
-.hafalan-body{display:flex;flex-direction:column;gap:10px}
-.hafalan-list{display:flex;flex-direction:column;gap:7px}
-.hafalan-item{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);overflow:hidden}
-.hafalan-item-inner{display:flex;align-items:flex-start;gap:8px;padding:9px 10px}
-.hafalan-num{width:20px;height:20px;flex-shrink:0;border-radius:50%;background:var(--accent-light);color:var(--accent);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:1px}
-.hafalan-text{flex:1;font-size:12px;line-height:1.6;color:var(--text);outline:none;min-height:18px;word-break:break-word}
-.hafalan-text:focus{background:var(--accent-light);border-radius:4px;padding:2px 4px}
-.hafalan-btns{display:flex;gap:4px;flex-shrink:0}
-.haf-btn{width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:5px;background:none;cursor:pointer;font-size:12px;transition:all .15s}
-.haf-btn:hover{border-color:var(--border2);background:var(--surface2)}
-.haf-btn.locked{background:var(--accent-light);border-color:var(--accent)}
-.haf-btn.del:hover{background:var(--red-light);border-color:var(--red)}
-.hafalan-locked-badge{font-size:10px;color:var(--accent);padding:2px 6px;background:var(--accent-light);border-radius:20px;font-weight:500;display:inline-flex;align-items:center;gap:3px}
-.hafalan-empty{font-size:12px;color:var(--text3);text-align:center;padding:20px 16px;font-style:italic;border:1px dashed var(--border);border-radius:var(--radius)}
-.gen-btn{width:100%;padding:9px;font-size:12px;font-weight:500;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:6px}
-.gen-btn:hover{background:#235A40}
-
-.presentasi-body{display:flex;flex-direction:column;gap:10px}
-.pres-card{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
-.pres-card-hd{display:flex;align-items:center;gap:7px;padding:7px 11px;font-size:11px;font-weight:600;border-bottom:1px solid var(--border)}
-.pres-card-hd.op{background:#EAF2FB;color:var(--blue)}
-.pres-card-hd.isi{background:var(--accent-light);color:var(--accent)}
-.pres-card-hd.pet{background:var(--purple-light);color:var(--purple)}
-.pres-card-body{padding:9px 11px;font-size:12px;line-height:1.7;color:var(--text);background:var(--surface);min-height:42px;outline:none}
-.pres-card-body:focus{background:var(--surface2)}
-.pres-card-body.empty{color:var(--text3);font-style:italic}
-.pres-footer{display:flex;align-items:center;gap:8px;margin-top:4px;padding-top:10px;border-top:1px solid var(--border)}
-.saved-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:20px;background:var(--accent-light);color:var(--accent);font-weight:500}
-.unsaved-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:20px;background:var(--gold-light);color:var(--gold);font-weight:500}
+@media print {
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; background: white; overflow: visible;}
+  .a4-paper { box-shadow: none; margin: 0; border: none; padding: 4cm 3cm 3cm 4cm; width: 21cm; min-height: 29.7cm; }
+  .a4-wrapper { padding: 0; background: transparent; overflow: visible; display: block; border:none; max-height: none;}
+  @page { size: A4 portrait; margin: 0; }
+}
 
 /* Right panel */
 .right-panel{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
@@ -311,7 +288,7 @@ canvas#doc-canvas {background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); ma
       <button class="pom-btn-sm" onclick="resetPom()">↺</button>
     </div>
     <button class="btn" onclick="switchMain('preview')">👁 Pratinjau</button>
-    <button class="btn btn-accent" onclick="exportPDF()">⬇ PDF</button>
+    <button class="btn btn-accent" onclick="openExportModal()">⬇ Print / PDF</button>
   </div>
 </div>
 
@@ -358,10 +335,14 @@ canvas#doc-canvas {background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); ma
   </div>
   <div class="editor-panel hidden" id="tab-preview">
     <div class="preview-toolbar">
-      <span class="preview-label">Pratinjau Skripsi</span>
+      <span class="preview-label">Pratinjau Skripsi (A4 Standar)</span>
+      <select id="preview-spacing" class="settings-select" style="width:auto; height:28px; font-size:11px;" onchange="renderPreview()">
+        <option value="1.5">Spasi 1.5</option>
+        <option value="2.0">Spasi 2.0</option>
+      </select>
       <button class="btn" onclick="copyFullText()">📋 Salin teks</button>
-      <button class="btn btn-accent" onclick="exportPDF()">⬇ Download PDF</button>
-      <span style="font-size:11px;color:var(--text3)">• Auto-update saat edit</span>
+      <button class="btn btn-accent" onclick="openExportModal()">⬇ Print / Unduh PDF</button>
+      <span style="font-size:11px;color:var(--text3); margin-left:auto;">• Margin 4-3-3-3 cm</span>
     </div>
     <div id="preview-wrap"></div>
   </div>
@@ -385,7 +366,18 @@ canvas#doc-canvas {background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); ma
 
   <div class="rp-body hidden" id="rp-pustaka">
     <div class="rp-sec">Koleksi Referensi Anda</div>
-    <div style="font-size:11px; color:var(--text3); margin-bottom:12px; line-height:1.5">Semua dokumen yang Anda sematkan pada teks akan terkumpul rapi di sini berdasarkan Bab.</div>
+    <div style="font-size:11px; color:var(--text3); margin-bottom:12px; line-height:1.5">Semua dokumen yang disematkan akan terkumpul rapi di sini.</div>
+    
+    <div id="pustaka-stats" style="font-size:11px; margin-bottom:8px; color:var(--accent); font-weight:600;"></div>
+    
+    <input type="text" id="pustaka-search" placeholder="Cari judul atau file..." oninput="renderPustaka()" class="settings-input" style="margin-bottom:8px; margin-top:0;">
+    
+    <select id="pustaka-sort" onchange="renderPustaka()" class="settings-select" style="margin-bottom:12px;">
+      <option value="bab">Urutkan: Per Bab</option>
+      <option value="newest">Urutkan: Terbaru Ditambahkan</option>
+      <option value="az">Urutkan: Judul A - Z</option>
+    </select>
+
     <div id="pustaka-list" style="display:flex; flex-direction:column; gap:0;"></div>
   </div>
   
@@ -511,6 +503,40 @@ canvas#doc-canvas {background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); ma
   </div>
 </div>
 
+<!-- Modal: Export PDF -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-header">
+      <div class="modal-title">⬇ Export / Cetak Skripsi</div>
+      <button class="close-btn" onclick="document.getElementById('export-modal').classList.remove('show')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px; color:var(--text2); margin-bottom:12px;">Lengkapi data halaman sampul sebelum mencetak dokumen atau mengunduh PDF.</div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">Nama Lengkap</label>
+        <input type="text" id="exp-name" class="settings-input" placeholder="Misal: Budi Santoso">
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">NIM</label>
+        <input type="text" id="exp-nim" class="settings-input" placeholder="Misal: 123456789">
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">Universitas / Fakultas / Program Studi</label>
+        <textarea id="exp-univ" class="settings-input" style="height:70px; resize:none; padding-top:8px;" placeholder="PROGRAM STUDI INFORMATIKA&#10;FAKULTAS ILMU KOMPUTER&#10;UNIVERSITAS INDONESIA"></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label class="form-label">Tahun Pengajuan</label>
+        <input type="text" id="exp-year" class="settings-input" placeholder="Misal: 2026">
+      </div>
+    </div>
+    <div class="modal-footer" style="flex-direction: column; gap: 8px;">
+      <button class="btn btn-accent" style="width: 100%; padding:10px; font-weight:600;" onclick="doPrint()">🖨 Print / Simpan sebagai PDF (Sangat Disarankan)</button>
+      <button class="btn" style="width: 100%; padding:10px;" onclick="doExportPDF()">⬇ Download via html2pdf</button>
+      <div style="font-size:10px; color:var(--text3); text-align:center;">Gunakan opsi Print untuk pemotongan halaman otomatis yang lebih rapi dan bersih.</div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Viewer -->
 <div class="modal-overlay" id="viewer-modal">
   <div class="modal-content">
@@ -543,9 +569,35 @@ canvas#doc-canvas {background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); ma
   <div class="modal-content">
     <div class="modal-header"><div class="modal-title">Cari Jurnal via AI</div><button class="close-btn" onclick="closeAISearch()">✕</button></div>
     <div class="modal-body" style="display:flex; flex-direction:column; gap:10px;">
-      <p style="font-size:12px; color:var(--text2); margin-bottom:4px;">AI akan mencarikan jurnal terbaru (2021-2026) berdasarkan teks yang Anda blok:</p>
-      <div class="highlighted-quote" id="ai-search-topic-display"></div>
+      <p style="font-size:12px; color:var(--text2); margin-bottom:4px;">AI akan mencarikan jurnal berdasarkan teks yang Anda blok:</p>
+      <div id="ai-search-topic-display" style="font-style:italic; padding:8px; border-left:3px solid var(--accent); background:var(--surface2); border-radius:4px; font-size:12px;"></div>
+      
+      <div class="form-row" style="margin-bottom:0;">
+        <div class="form-group">
+          <label class="form-label">Bahasa</label>
+          <select id="ai-search-lang" class="settings-select">
+            <option value="id">Indonesia</option>
+            <option value="en">Internasional (Inggris)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tahun Terbit</label>
+          <select id="ai-search-year" class="settings-select">
+            <option value="2021">2021 - Sekarang</option>
+            <option value="2022">2022 - Sekarang</option>
+            <option value="2023">2023 - Sekarang</option>
+            <option value="2024">2024 - Sekarang</option>
+            <option value="2025">2025 - Sekarang</option>
+          </select>
+        </div>
+      </div>
+
       <label style="font-size:12px; display:flex; align-items:center; gap:6px; cursor:pointer; color:var(--text2);"><input type="checkbox" id="ai-search-web"> Sertakan website terpercaya</label>
+      
+      <div style="background:var(--gold-light); color:var(--gold); padding:8px 12px; border-radius:6px; font-size:11px; line-height:1.4; border:1px solid #E6C96A; margin-top:4px;">
+        <strong>⚠️ Perhatian:</strong> AI dapat menghasilkan referensi fiktif (halusinasi). Harap klik tombol <strong>"Cek URL Asli"</strong> untuk memverifikasi tautan secara manual sebelum menambahkannya ke pustaka.
+      </div>
+
       <button class="btn btn-accent" style="padding:10px; font-size:13px; margin-top:4px;" onclick="doAISearch()">🔍 Mulai Pencarian</button>
       <div id="ai-search-results" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;"></div>
     </div>
@@ -1028,8 +1080,13 @@ function closeAISearch() {
 async function doAISearch() {
   const highlighted = activeSearchContext.text; 
   const incWeb = document.getElementById('ai-search-web').checked;
+  const lang = document.getElementById('ai-search-lang').value;
+  const year = document.getElementById('ai-search-year').value;
+  const currentYear = new Date().getFullYear();
   
-  const prompt = `Carikan 3-4 referensi daftar pustaka berbahasa Indonesia TERBARU (hanya terbitan 2021 hingga 2026) yang sangat relevan dengan pernyataan mahasiswa ini: "${highlighted}". Sumber harus berupa ${incWeb ? 'Artikel Jurnal Ilmiah atau Website Terpercaya' : 'Hanya Artikel Jurnal Ilmiah'}. Tentukan perkiraan HALAMAN (pages) di dalam jurnal. Setiap referensi WAJIB memiliki ringkasan. Kembalikan HANYA format JSON array valid: [{"title":"Judul","authors":"Penulis","year":"Tahun","journal":"Nama Jurnal","url":"URL","pages":"Halaman","summary":"Ringkasan"}]`;
+  const languagePrompt = lang === 'id' ? 'berbahasa Indonesia' : 'berbahasa Inggris (Internasional)';
+  
+  const prompt = `Carikan 3-4 referensi daftar pustaka ${languagePrompt} yang sangat relevan dengan pernyataan mahasiswa ini: "${highlighted}". Sumber harus berupa ${incWeb ? 'Artikel Jurnal Ilmiah atau Website Terpercaya' : 'Hanya Artikel Jurnal Ilmiah'} dan diterbitkan antara tahun ${year} hingga ${currentYear}. Tentukan perkiraan HALAMAN (pages) di dalam jurnal. Setiap referensi WAJIB memiliki ringkasan. Kembalikan HANYA format JSON array valid: [{"title":"Judul","authors":"Penulis","year":"Tahun","journal":"Nama Jurnal","url":"URL (Berikan link asli jurnal tersebut)","pages":"Halaman","summary":"Ringkasan"}]`;
 
   document.getElementById('ai-search-results').innerHTML = '<div style="text-align:center;padding:20px"><div class="ai-spinner"></div><div style="font-size:12px;color:var(--text2)">AI menelusuri artikel...</div></div>';
   
@@ -1041,18 +1098,26 @@ async function doAISearch() {
   }
   
   try {
-    // Fixed: properly escaped regex
     const arr = JSON.parse(res.replace(/```json|```/g,'').trim()); 
     let html = '';
     
     arr.forEach((item) => {
        const payload = encodeURIComponent(JSON.stringify(item));
-       html += `<div class="cop-box" style="margin-bottom:0;"><div style="font-weight:600; font-size:13px; margin-bottom:4px; color:var(--accent); line-height:1.4">${item.title}</div><div style="font-size:11px; color:var(--text2); margin-bottom:4px">👤 ${item.authors} (${item.year}) • 📰 ${item.journal}</div><div style="font-size:11px; font-weight:600; color:var(--purple); margin-bottom:6px">📌 Terdapat di: ${item.pages || 'Halaman tidak spesifik'}</div><div style="font-size:11px; color:var(--text); line-height:1.5; margin-bottom:10px; background:var(--surface2); padding:6px; border-radius:6px;">${item.summary}</div><div style="display:flex; gap:6px;"><button class="btn btn-accent" style="padding:5px 10px; font-size:11px;" onclick="addAIRefToSubbab('${payload}', this, '${activeSearchContext.subId}')">➕ Tambah ke Pustaka & Sematkan</button><a href="${item.url}" target="_blank" class="btn" style="padding:5px 10px; font-size:11px; text-decoration:none;">🔗 Buka Link</a></div></div>`;
+       html += `<div class="cop-box" style="margin-bottom:0;">
+         <div style="font-weight:600; font-size:13px; margin-bottom:4px; color:var(--accent); line-height:1.4">${item.title}</div>
+         <div style="font-size:11px; color:var(--text2); margin-bottom:4px">👤 ${item.authors} (${item.year}) • 📰 ${item.journal}</div>
+         <div style="font-size:11px; font-weight:600; color:var(--purple); margin-bottom:6px">📌 Terdapat di: ${item.pages || 'Halaman tidak spesifik'}</div>
+         <div style="font-size:11px; color:var(--text); line-height:1.5; margin-bottom:10px; background:var(--surface2); padding:6px; border-radius:6px;">${item.summary}</div>
+         <div style="display:flex; gap:6px; flex-wrap:wrap;">
+           <button class="btn btn-accent" style="padding:5px 10px; font-size:11px;" onclick="addAIRefToSubbab('${payload}', this, '${activeSearchContext.subId}')">➕ Tambah ke Pustaka</button>
+           <a href="${item.url}" target="_blank" class="btn" style="padding:5px 10px; font-size:11px; text-decoration:none; display:flex; align-items:center; gap:4px; border-color:var(--gold); color:var(--gold); background:var(--gold-light);" onclick="alert('PENTING: Harap verifikasi keberadaan URL dan keaslian jurnal ini secara manual sebelum menambahkannya ke Pustaka. AI terkadang dapat menghasilkan referensi yang kurang akurat.')">🔍 Cek URL Asli</a>
+         </div>
+       </div>`;
     }); 
     
     document.getElementById('ai-search-results').innerHTML = html;
   } catch(e) { 
-    document.getElementById('ai-search-results').innerHTML = '<div style="text-align:center; color:var(--red);">Format JSON salah.</div>'; 
+    document.getElementById('ai-search-results').innerHTML = '<div style="text-align:center; color:var(--red);">Format JSON salah atau AI gagal memberikan data yang valid.</div>'; 
   }
 }
 
@@ -1166,7 +1231,7 @@ function attachFileToSubbab(subId, fileMeta) {
 }
 
 function deleteAttachment(subId, fileId) {
-  if(!confirm('Hapus sematan?')) return; 
+  if(!confirm('Hapus sematan referensi ini?')) return; 
   const s = findSec(subId);
   
   if(s && s.attachments) {
@@ -1371,34 +1436,76 @@ function changePage(offset) {
 
 function renderPustaka() {
   const list = document.getElementById('pustaka-list'); 
+  const statsEl = document.getElementById('pustaka-stats');
+  const searchQ = (document.getElementById('pustaka-search')?.value || '').toLowerCase();
+  const sortMode = document.getElementById('pustaka-sort')?.value || 'bab';
+  
   if(!list) return; 
   
-  list.innerHTML = ''; 
-  let hasAny = false;
+  let allAtts = [];
+  let uniqueBabIds = new Set();
   
   S.sections.forEach(bab => {
-    let babAtts = []; 
-    let addedIds = new Set();
-    
-    (bab.children||[]).forEach(sub => { 
+    (bab.children || []).forEach(sub => { 
       if(sub.attachments) { 
         sub.attachments.forEach(a => { 
-          if(!addedIds.has(a.id)) { 
-            babAtts.push(a); 
-            addedIds.add(a.id); 
-          } 
+          allAtts.push({ ...a, babTitle: bab.title, babId: bab.id, subId: sub.id });
+          uniqueBabIds.add(bab.id);
         }); 
       } 
     });
-    
-    if(babAtts.length > 0) { 
-      hasAny = true; 
-      list.innerHTML += `<div class="pustaka-rak"><div class="pustaka-rak-title">📁 RAK: ${xe(bab.title).toUpperCase()}</div>${babAtts.map(a => `<div class="pustaka-item-wrap"><div class="cop-box" style="margin-bottom:0; cursor:pointer; display:flex; align-items:flex-start; gap:8px; border:none; background:transparent;" onclick="openViewer('${a.id}')"><div style="font-size:20px; line-height:1">${a.type==='pdf'?'📄':a.type==='link'?'🔗':'🖼️'}</div><div style="flex:1"><div style="font-size:12px; font-weight:600; color:var(--text); margin-bottom:2px; word-break:break-all">${xe(a.name)}</div></div></div></div>`).join('')}</div>`; 
-    }
   });
-  
-  if(!hasAny) {
-    list.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:20px;font-style:italic;border:1px dashed var(--border);border-radius:var(--radius)">Pustaka kosong.</div>';
+
+  if (searchQ) {
+    allAtts = allAtts.filter(a => a.name.toLowerCase().includes(searchQ));
+  }
+
+  if(statsEl) {
+     statsEl.textContent = `Total ${allAtts.length} referensi digunakan dalam ${uniqueBabIds.size} bab.`;
+  }
+
+  if(allAtts.length === 0) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:20px;font-style:italic;border:1px dashed var(--border);border-radius:var(--radius)">Pustaka kosong atau file tidak ditemukan.</div>';
+    return;
+  }
+
+  list.innerHTML = ''; 
+
+  const renderItemHtml = (item) => `
+    <div class="pustaka-item-wrap">
+      <div class="cop-box" style="margin-bottom:0; display:flex; align-items:flex-start; gap:8px; border:none; background:transparent;">
+        <div style="font-size:20px; line-height:1; cursor:pointer;" onclick="openViewer('${item.id}')">${item.type==='pdf'?'📄':item.type==='link'?'🔗':'🖼️'}</div>
+        <div style="flex:1">
+          <div style="font-size:12px; font-weight:600; color:var(--text); margin-bottom:4px; word-break:break-all; cursor:pointer;" onclick="openViewer('${item.id}')">${xe(item.name)}</div>
+          ${sortMode !== 'bab' ? `<div style="font-size:10px; color:var(--text3); margin-bottom:4px;">Disematkan di: ${xe(item.babTitle)}</div>` : ''}
+          <button class="close-btn" style="font-size:11px; padding:3px 8px; border:1px solid var(--border); border-radius:4px; margin-top:2px;" onclick="event.stopPropagation(); deleteAttachment('${item.subId}', '${item.id}')">🗑 Hapus dari Pustaka</button>
+        </div>
+      </div>
+    </div>`;
+
+  if (sortMode === 'bab') {
+    let grouped = {};
+    allAtts.forEach(a => {
+      if(!grouped[a.babTitle]) grouped[a.babTitle] = [];
+      grouped[a.babTitle].push(a);
+    });
+    
+    for (let bTitle in grouped) {
+      let itemsHtml = grouped[bTitle].map(renderItemHtml).join('');
+      list.innerHTML += `<div class="pustaka-rak"><div class="pustaka-rak-title">📁 RAK: ${xe(bTitle).toUpperCase()}</div>${itemsHtml}</div>`;
+    }
+  } else {
+    if (sortMode === 'az') {
+      allAtts.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortMode === 'newest') {
+      allAtts.sort((a, b) => {
+         let ta = parseInt(a.id.split('_')[1] || 0);
+         let tb = parseInt(b.id.split('_')[1] || 0);
+         return tb - ta;
+      });
+    }
+    let itemsHtml = allAtts.map(renderItemHtml).join('');
+    list.innerHTML += `<div class="pustaka-rak" style="border:none; background:transparent;">${itemsHtml}</div>`;
   }
 }
 
@@ -1612,96 +1719,77 @@ function switchRp(tab,btn){
   if(tab==='pustaka') renderPustaka(); 
 }
 
-function renderPreview(){
-  const wrap=document.getElementById('preview-wrap');
+function renderPreview() {
+  const wrap = document.getElementById('preview-wrap');
   if(!wrap) return; 
   
-  wrap.innerHTML='';
+  const spacing = document.getElementById('preview-spacing')?.value || '1.5';
+  const spacingClass = spacing === '2.0' ? 'spacing-2' : '';
   
   if(!S.sections.length){
     wrap.innerHTML='<div style="font-size:13px;color:var(--text3);font-style:italic;text-align:center;padding:40px">Belum ada konten. Tambahkan di editor.</div>';
     return;
   }
-  
-  S.sections.forEach(bab=>{ 
-    const h=document.createElement('div');
-    h.className='preview-bab-heading';
-    h.textContent=bab.title;
-    wrap.appendChild(h); 
-    (bab.children||[]).forEach(sub=>wrap.appendChild(buildSubbabBlock(sub))); 
+
+  // Bungkus dalam A4 Wrapper untuk preview web & print mode
+  wrap.innerHTML = `<div id="print-area" class="a4-wrapper"><div class="a4-paper ${spacingClass}" id="a4-content"></div></div>`;
+  const content = document.getElementById('a4-content');
+
+  let html = '';
+
+  const pName = localStorage.getItem('exp_name') || '[NAMA MAHASISWA]';
+  const pNim = localStorage.getItem('exp_nim') || '[NIM MAHASISWA]';
+  const pUniv = (localStorage.getItem('exp_univ') || 'NAMA UNIVERSITAS\nFAKULTAS\nPROGRAM STUDI').replace(/\n/g, '<br>');
+  const pYear = localStorage.getItem('exp_year') || new Date().getFullYear();
+
+  // Halaman Sampul (Cover)
+  html += `
+    <div class="a4-cover">
+      <div class="c-title">${S.thesisTitle || 'JUDUL SKRIPSI BELUM DITENTUKAN'}</div>
+      <div class="c-logo" style="margin-bottom:1.5cm;">LOGO</div>
+      <div style="font-weight:bold; margin-bottom:1.5cm;">Disusun Oleh:</div>
+      <div>
+        <div class="c-author">${pName}</div>
+        <div class="c-nim">${pNim}</div>
+      </div>
+      <div style="flex:1"></div>
+      <div class="c-univ">${pUniv}<br><br>${pYear}</div>
+    </div>
+    <div style="page-break-before: always;"></div>
+  `;
+
+  // Daftar Isi
+  html += `<div class="toc-title">DAFTAR ISI</div>`;
+  S.sections.forEach((bab) => {
+    html += `<div class="toc-item toc-bab"><span>${xe(bab.title).toUpperCase()}</span><div class="dots"></div><span></span></div>`;
+    (bab.children || []).forEach(sub => {
+      html += `<div class="toc-item" style="padding-left: 1.5cm;"><span>${xe(sub.title)}</span><div class="dots"></div><span></span></div>`;
+    });
   });
-}
+  html += `<div style="page-break-before: always;"></div>`;
 
-function buildSubbabBlock(sub){
-  sub.aiData=sub.aiData||mkAiData(); 
-  const block=document.createElement('div'); 
-  block.className='preview-subbab-block'; 
-  block.id='pvb-'+sub.id;
-  
-  const hd=document.createElement('div'); 
-  hd.className='preview-subbab-header'; 
-  hd.innerHTML=`<span class="preview-subbab-title">${xe(sub.title)}</span><span class="preview-subbab-chevron" id="chev-${sub.id}">▼</span>`; 
-  hd.onclick=()=>collapseSubbab(sub.id); 
-  block.appendChild(hd);
-  
-  const content=document.createElement('div'); 
-  content.className='preview-subbab-content'; 
-  content.id='pvc-'+sub.id;
-  
-  if(!sub.text || !sub.text.replace(/<[^>]*>?/gm, '').trim()){
-    content.innerHTML='<div class="preview-para-placeholder">Belum ada isi di sub-bab ini.</div>';
-  } else { 
-    const el=document.createElement('div'); 
-    el.className='preview-para-text'; 
-    el.innerHTML=sub.text; 
-    content.appendChild(el); 
-  } 
-  block.appendChild(content);
-  
-  const panel=document.createElement('div'); 
-  panel.className='subbab-ai-panel'; 
-  panel.id='pvp-'+sub.id;
-  
-  panel.innerHTML=`<div class="subbab-ai-tabs"><div class="subbab-ai-tab active" id="stab-ring-${sub.id}" onclick="switchSubTab('${sub.id}','ring',this)">📋 Ringkasan AI</div><div class="subbab-ai-tab" id="stab-haf-${sub.id}" onclick="switchSubTab('${sub.id}','haf',this)">🧠 Hafalan</div><div class="subbab-ai-tab" id="stab-pres-${sub.id}" onclick="switchSubTab('${sub.id}','pres',this)">🎤 Cara Jelaskan</div></div><div id="st-ring-${sub.id}" class="ringkasan-body"><div class="section-label">Ringkasan otomatis sub-bab ini</div><div class="ringkasan-text" id="ring-txt-${sub.id}">${sub.aiData.ringkasan||'<span style="color:var(--text3);font-style:italic">Klik Generate untuk membuat ringkasan AI.</span>'}</div><div class="regen-bar" id="ring-bar-${sub.id}"><button class="btn btn-accent" style="font-size:11px;padding:5px 12px" onclick="genRingkasan('${sub.id}')">✦ ${sub.aiData.ringkasan?'Regenerate':'Generate'} Ringkasan</button>${sub.aiData.ringkasan?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="copyRing('${sub.id}')">📋 Salin</button>`:''}</div></div><div id="st-haf-${sub.id}" class="hafalan-body hidden"><div class="section-label">Poin hafalan</div><div class="hafalan-list" id="haf-list-${sub.id}">${buildHafalanHTML(sub)}</div><button class="gen-btn" onclick="genHafalan('${sub.id}')">✦ ${(sub.aiData.hafalan||[]).length?'Tambah Hafalan':'Generate Hafalan'}</button></div><div id="st-pres-${sub.id}" class="presentasi-body hidden"><div class="section-label">Cara menjelaskan ke dosen</div>${buildPresentasiHTML(sub)}</div>`;
-  
-  block.appendChild(panel); 
-  return block;
-}
+  // Isi Skripsi (Bab & Subbab)
+  S.sections.forEach(bab => { 
+    html += `<h1>${xe(bab.title)}</h1>`;
+    (bab.children || []).forEach(sub => {
+      html += `<h2>${xe(sub.title)}</h2>`;
+      if(!sub.text || !sub.text.replace(/<[^>]*>?/gm, '').trim()){
+        html += `<p style="color:#999; font-style:italic; text-indent:0; text-align:center;">(Belum ada isi di bagian ini)</p>`;
+      } else {
+        html += `<div>${sub.text}</div>`;
+      }
+    });
+  });
 
-function buildHafalanHTML(sub){ 
-  const haf=sub.aiData.hafalan||[]; 
-  if(!haf.length) return `<div class="hafalan-empty">Belum ada poin hafalan.</div>`; 
-  
-  return haf.map((item,i)=>`<div class="hafalan-item" id="hi-${sub.id}-${i}"><div class="hafalan-item-inner"><div class="hafalan-num">${i+1}</div><div class="hafalan-text" contenteditable="true" id="ht-${sub.id}-${i}" onblur="updHaf('${sub.id}',${i},this.innerText||this.textContent)">${xe(item.text)}</div><div class="hafalan-btns"><button class="haf-btn ${item.locked?'locked':''}" onclick="toggleLockHaf('${sub.id}',${i})">${item.locked?'🔒':'💾'}</button><button class="haf-btn del" onclick="delHaf('${sub.id}',${i})">✕</button></div></div></div>`).join(''); 
-}
+  // Daftar Pustaka
+  if (S.literature && S.literature.length > 0) {
+     html += `<h1 style="page-break-before: always;">DAFTAR PUSTAKA</h1>`;
+     S.literature.forEach(lit => {
+        html += `<div style="text-align:justify; text-indent:-1.2cm; padding-left:1.2cm; margin-bottom:12px;">${fmtCite(lit, S.citeFormat)}</div>`;
+     });
+  }
 
-function buildPresentasiHTML(sub){ 
-  const p=sub.aiData.presentasi||{opening:'',isi:'',penutup:''}; 
-  const saved=sub.aiData.presentasiSaved; 
-  const noContent='<span style="color:var(--text3);font-style:italic">Klik Generate...</span>'; 
-  
-  return `<div class="pres-card"><div class="pres-card-hd op">🙋 Pembukaan</div><div class="pres-card-body ${p.opening?'':'empty'}" contenteditable="true" id="po-${sub.id}" onfocus="clearEmpty(this)" onblur="updPres('${sub.id}','opening',this)">${p.opening||noContent}</div></div><div class="pres-card"><div class="pres-card-hd isi">📌 Inti</div><div class="pres-card-body ${p.isi?'':'empty'}" contenteditable="true" id="pi-${sub.id}" onfocus="clearEmpty(this)" onblur="updPres('${sub.id}','isi',this)">${p.isi||noContent}</div></div><div class="pres-card"><div class="pres-card-hd pet">✅ Penutup</div><div class="pres-card-body ${p.penutup?'':'empty'}" contenteditable="true" id="pp-${sub.id}" onfocus="clearEmpty(this)" onblur="updPres('${sub.id}','penutup',this)">${p.penutup||noContent}</div></div><div class="pres-footer">${saved?'<span class="saved-badge">🔒 Script tersimpan</span>':'<span class="unsaved-badge">⚠ Belum disimpan</span>'}<button class="btn btn-accent" style="font-size:11px;padding:5px 12px;margin-left:auto" onclick="savePres('${sub.id}')">🔒 Simpan</button>${p.isi?`<button class="btn" style="font-size:11px;padding:5px 12px" onclick="copyPres('${sub.id}')">📋 Salin</button>`:''}</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-accent" style="font-size:11px;padding:5px 12px" onclick="genPres('${sub.id}')">✦ ${p.isi?'Regenerate':'Generate Cara Jelaskan'}</button></div>`; 
-}
-
-function switchSubTab(subId,tab,btn){ 
-  ['ring','haf','pres'].forEach(t=>{ 
-    const el=document.getElementById(`st-${t}-${subId}`); 
-    if(el) el.classList.toggle('hidden',t!==tab); 
-    const tb=document.getElementById(`stab-${t}-${subId}`); 
-    if(tb) tb.classList.toggle('active',t===tab); 
-  }); 
-}
-
-function collapseSubbab(subId){ 
-  const content=document.getElementById('pvc-'+subId); 
-  const panel=document.getElementById('pvp-'+subId); 
-  const chev=document.getElementById('chev-'+subId); 
-  const isOpen=content.style.display!=='none'; 
-  
-  content.style.display=isOpen?'none':'block'; 
-  panel.style.display=isOpen?'none':'block'; 
-  
-  if(chev) chev.classList.toggle('closed',isOpen); 
+  content.innerHTML = html;
 }
 
 // ACTION & UTILS AI PROMPT
@@ -1979,9 +2067,6 @@ function updSubTxt(id,val){
   showAS(id);
   debouncedSave();
   updateStats(); 
-  
-  const pvContent = document.querySelector('#pvc-'+id+' .preview-para-text'); 
-  if(pvContent) pvContent.innerHTML = val;
 }
 
 // SAVE & SINKRONISASI
@@ -2039,7 +2124,68 @@ function scrollTo(id){
   document.getElementById('sec-'+id)?.scrollIntoView({behavior:'smooth',block:'center'}); 
 }
 
-// CITATIONS & EXPORT
+// EXPORT PDF & PRINT
+function openExportModal() {
+  document.getElementById('exp-name').value = localStorage.getItem('exp_name') || '';
+  document.getElementById('exp-nim').value = localStorage.getItem('exp_nim') || '';
+  document.getElementById('exp-univ').value = localStorage.getItem('exp_univ') || '';
+  document.getElementById('exp-year').value = localStorage.getItem('exp_year') || new Date().getFullYear();
+  document.getElementById('export-modal').classList.add('show');
+}
+
+function saveExportMeta() {
+  localStorage.setItem('exp_name', document.getElementById('exp-name').value);
+  localStorage.setItem('exp_nim', document.getElementById('exp-nim').value);
+  localStorage.setItem('exp_univ', document.getElementById('exp-univ').value);
+  localStorage.setItem('exp_year', document.getElementById('exp-year').value);
+  renderPreview(); 
+}
+
+function doPrint() {
+  saveExportMeta();
+  document.getElementById('export-modal').classList.remove('show');
+  
+  if(document.getElementById('tab-preview').classList.contains('hidden')) {
+    switchMain('preview');
+  }
+  
+  setTimeout(() => window.print(), 500);
+}
+
+function doExportPDF() {
+  saveExportMeta();
+  showThinking('Menyusun PDF...');
+  
+  if(document.getElementById('tab-preview').classList.contains('hidden')) {
+    switchMain('preview');
+  }
+
+  setTimeout(() => {
+    const element = document.getElementById('a4-content');
+    const opt = {
+      margin:       0,
+      filename:     (S.thesisTitle || 'Skripsi') + '.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, windowWidth: 800 },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save().then(() => {
+      hideThinking();
+      document.getElementById('export-modal').classList.remove('show');
+      showToast('✓ PDF Berhasil diunduh!');
+    }).catch(e => {
+      hideThinking();
+      showToast('Gagal memproses PDF: ' + e.message);
+    });
+  }, 800);
+}
+
+function exportPDF() { 
+  openExportModal();
+}
+
+// CITATIONS
 function fmtCite(lit,fmt){ 
   if(fmt==='apa') return `${lit.authors} (${lit.year}). ${lit.title}. <em>${lit.journal}</em>. https://doi.org/${lit.doi||''}`; 
   if(fmt==='ieee') return `${lit.authors}, "${lit.title}," <em>${lit.journal}</em>, ${lit.year}.`; 
@@ -2083,10 +2229,6 @@ function copyFullText(){
     });
   });
   navigator.clipboard.writeText(t.trim()).then(()=>showToast('Teks disalin!'));
-}
-
-function exportPDF(){ 
-  showToast('Gunakan fitur Print ke PDF dari browser Anda pada mode Pratinjau.'); 
 }
 
 function updateStats(){ 
